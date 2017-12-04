@@ -61,24 +61,23 @@ func main() {
 
 func printStatus(status string, err error) {
 	if err != nil {
-		fmt.Println(status, "\nError: ", err)
+		fmt.Println(status, "\nError:", err)
 	} else {
 		fmt.Println(status)
 	}
 }
-
 func processStart() (string, error) {
 	action := "Starting service:"
 	if _, err := os.Stat(PidFile); !os.IsNotExist(err) {
-		return action + failed, ErrAlreadyRunning
+		return fmt.Sprintf(format, action, failed), ErrAlreadyRunning
 	} else {
 		cmd := exec.Command(Binary)
 		cmd.Dir = BinaryDir
 		err = cmd.Start()
 		if err != nil {
-			return action + failed, err
+			return fmt.Sprintf(format, action, failed), err
 		}
-		return action + success, nil
+		return fmt.Sprintf(format, action, success), nil
 	}
 }
 
@@ -86,7 +85,7 @@ func processStop() (string, error) {
 	action := "Stopping service:"
 	content, err := ioutil.ReadFile(PidFile)
 	if err != nil {
-		return action + failed, ErrAlreadyStopped
+		return fmt.Sprintf(format, action, failed), ErrAlreadyStopped
 	} else {
 		quitStop := make(chan bool)
 		pid := string(content)
@@ -95,9 +94,9 @@ func processStop() (string, error) {
 		cmd.Dir = dir
 		err = cmd.Start()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, err.Error())
+			return fmt.Sprintf(format, action, failed), err
 		}
-		arr := []string{"\rStopping.   ","\rStopping..  ","\rStopping... ","\rStopping...."}
+		arr := []string{"\rStopping.   ", "\rStopping..  ", "\rStopping... ", "\rStopping...."}
 		go func() {
 			i := 0
 			for {
@@ -114,7 +113,7 @@ func processStop() (string, error) {
 			}
 		}()
 		<-quitStop
-		return action + success, nil
+		return fmt.Sprintf(format, action, success), nil
 	}
 }
 
