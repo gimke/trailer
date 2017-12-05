@@ -78,8 +78,10 @@ func processWork() {
 		l := cartlog.Log{}
 		l.New()
 		pid := []byte(strconv.Itoa(os.Getpid()))
+		if _, err := os.Stat(PidDir); os.IsNotExist(err) {
+			os.Mkdir(PidDir, os.ModePerm)
+		}
 		ioutil.WriteFile(PidFile, pid, 0666)
-
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 

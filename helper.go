@@ -9,9 +9,9 @@ const (
 	VERSION = "1.0.2"
 	PID     = "pid"
 
-	reset   = "\033[0m"
-	red     = "\033[31m"
-	green   = "\033[32m"
+	reset = "\033[0m"
+	red   = "\033[31m"
+	green = "\033[32m"
 
 	startUsage        = "Start service"
 	stopUsage         = "Stop service"
@@ -32,6 +32,7 @@ var (
 	BinaryName string
 	BinaryDir  string
 	Binary     string
+	PidDir     string
 	PidFile    string
 
 	ShouldQuit = false

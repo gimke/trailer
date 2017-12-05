@@ -29,3 +29,14 @@ Usage of ./trailer:
 ```bash
 Usage: add | remove | list | start | stop | restart | status
 ```
+
+### config
+> path services
+```json
+{
+  "name": "demo",
+  "command": ["/Users/yanggang/go/src/github.com/gimke/trailer/demo/demo"],
+  "runAtLoad": true,
+  "keepAlive": true
+}
+```
