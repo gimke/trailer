@@ -51,9 +51,8 @@ func main() {
 		return
 	}
 	if restart {
-		status, err := processStop()
-		printStatus(status, err)
-		status, err = processStart()
+		processStop()
+		status, err := processStart()
 		printStatus(status, err)
 		return
 	}
@@ -115,7 +114,8 @@ func processStop() (string, error) {
 //real work
 func startWork() {
 	if _, err := os.Stat(PidFile); !os.IsNotExist(err) {
-		log.Fatalln("Service is already running")
+		fmt.Fprintln(os.Stderr,"\033[31m"+ErrAlreadyRunning.Error()+"\033[0m")
+		os.Exit(1)
 	} else {
 		l := cartlog.Log{}
 		l.New()
