@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/gimke/cartlog"
 	"io/ioutil"
 	"log"
 	"os"
@@ -56,16 +57,10 @@ func main() {
 		printStatus(status, err)
 		return
 	}
+
 	startWork()
 }
 
-func printStatus(status string, err error) {
-	if err != nil {
-		fmt.Println(status, "\nError:", err)
-	} else {
-		fmt.Println(status)
-	}
-}
 func processStart() (string, error) {
 	action := "Starting service:"
 	if _, err := os.Stat(PidFile); !os.IsNotExist(err) {
@@ -96,20 +91,20 @@ func processStop() (string, error) {
 		if err != nil {
 			return fmt.Sprintf(format, action, failed), err
 		}
-		arr := []string{"\rStopping.   ", "\rStopping..  ", "\rStopping... ", "\rStopping...."}
+		arr := []string{"Stopping service.", "Stopping service..", "Stopping service..."}
 		go func() {
 			i := 0
 			for {
 				if _, err := os.Stat(PidFile); os.IsNotExist(err) {
 					quitStop <- true
+					break
 				}
 				fmt.Printf(arr[i])
-				fmt.Printf("\r")
-				i++
-				if i == len(arr) {
+				if i++; i == len(arr) {
 					i = 0
 				}
 				time.Sleep(1 * time.Second)
+				eraseLine()
 			}
 		}()
 		<-quitStop
@@ -119,22 +114,28 @@ func processStop() (string, error) {
 
 //real work
 func startWork() {
-	var pid = []byte(strconv.Itoa(os.Getpid()))
-	ioutil.WriteFile(PidFile, pid, 0666)
+	if _, err := os.Stat(PidFile); !os.IsNotExist(err) {
+		log.Fatalln("Service is already running")
+	} else {
+		l := cartlog.Log{}
+		l.New()
+		var pid = []byte(strconv.Itoa(os.Getpid()))
+		ioutil.WriteFile(PidFile, pid, 0666)
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		sig := <-sigs
-		log.Println(sig)
-		ShouldQuit = true
-	}()
-	go func() {
-		Do()
-	}()
+		go func() {
+			sig := <-sigs
+			log.Println(sig)
+			ShouldQuit = true
+		}()
+		go func() {
+			Do()
+		}()
 
-	<-Quit
-	//delete pid
-	os.Remove(PidFile)
+		<-Quit
+		//delete pid
+		os.Remove(PidFile)
+	}
 }

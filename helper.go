@@ -39,3 +39,16 @@ var (
 	success = "[\033[32m" + fmt.Sprintf("%-6s", fmt.Sprintf("%4s", "OK")) + "\033[0m]"
 	failed  = "[\033[31m" + fmt.Sprintf("%-6s", fmt.Sprintf("%6s", "FAILED")) + "\033[0m]"
 )
+
+func printStatus(status string, err error) {
+	if err != nil {
+		fmt.Println(status, "\nError:", err)
+	} else {
+		fmt.Println(status)
+	}
+}
+
+func eraseLine() {
+	fmt.Printf("\x1b[%dK", 2)	//clear entire line
+	fmt.Printf("\r")				//move cursor to beginning of the line
+}

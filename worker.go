@@ -3,12 +3,9 @@ package main
 import (
 	"time"
 	"log"
-	"github.com/gimke/cartlog"
 )
 
 func Do() {
-	l:= cartlog.Log{}
-	l.New()
 	for {
 		log.Printf("OOO\n")
 		log.Println("Test")
