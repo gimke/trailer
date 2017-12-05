@@ -6,24 +6,33 @@ import (
 )
 
 const (
-	VERSION = "1.0.0"
+	VERSION = "1.0.2"
 	PID     = "pid"
 
-	startUsage   = "Start service"
-	stopUsage    = "Stop service"
-	restartUsage = "Restart service"
-	versionUsage = "Display version"
+	reset   = "\033[0m"
+	red     = "\033[31m"
+	green   = "\033[32m"
+
+	startUsage        = "Start service"
+	stopUsage         = "Stop service"
+	restartUsage      = "Restart service"
+	versionUsage      = "Display version"
+	consoleUsage      = "Console"
+	runAsServiceUsage = "Run as service"
 )
 
 var (
-	start   bool
-	stop    bool
-	restart bool
-	version bool
+	start        bool
+	stop         bool
+	restart      bool
+	version      bool
+	console      bool
+	runAsService bool
 
-	BinaryDir string
-	Binary    string
-	PidFile   string
+	BinaryName string
+	BinaryDir  string
+	Binary     string
+	PidFile    string
 
 	ShouldQuit = false
 	Quit       = make(chan bool)

@@ -1,4 +1,6 @@
 .idea/
 logs/
+run/
+services/
 pid
 trailer
