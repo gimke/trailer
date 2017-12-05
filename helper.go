@@ -23,14 +23,13 @@ var (
 
 	BinaryDir string
 	Binary    string
-	PidFile       string
+	PidFile   string
 
 	ShouldQuit = false
 	Quit       = make(chan bool)
-	format = "%-40s%s"
+	format     = "%-40s%s"
 
-
-// ErrAlreadyRunning appears if try to start already running service
+	// ErrAlreadyRunning appears if try to start already running service
 	ErrAlreadyRunning = errors.New("Service is already running")
 
 	// ErrAlreadyStopped appears if try to stop already stopped service
@@ -49,6 +48,6 @@ func printStatus(status string, err error) {
 }
 
 func eraseLine() {
-	fmt.Printf("\x1b[%dK", 2)	//clear entire line
-	fmt.Printf("\r")				//move cursor to beginning of the line
+	fmt.Printf("\x1b[%dK", 2) //clear entire line
+	fmt.Printf("\r")          //move cursor to beginning of the line
 }

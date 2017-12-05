@@ -114,7 +114,7 @@ func processStop() (string, error) {
 //real work
 func startWork() {
 	if _, err := os.Stat(PidFile); !os.IsNotExist(err) {
-		fmt.Fprintln(os.Stderr,"\033[31m"+ErrAlreadyRunning.Error()+"\033[0m")
+		fmt.Fprintln(os.Stderr, "\033[31m"+ErrAlreadyRunning.Error()+"\033[0m")
 		os.Exit(1)
 	} else {
 		l := cartlog.Log{}
