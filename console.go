@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 )
 
 func consoleExec(commands []string) {
-	usage := "Usage: add | remove | list | start | stop | restart | status"
+	usage := "Usage: list | start | stop | restart | status"
 	if len(commands) == 0 {
 		fmt.Println(usage)
 		commands = append(commands, "list")
@@ -22,8 +21,37 @@ func consoleExec(commands []string) {
 			fmt.Printf("%s (%s) is %s%s%s\n", BinaryName, strconv.Itoa(thisPid), green, "RUNNING", reset)
 		}
 		break
-	case "quit":
-		os.Exit(1)
+	case "restart":
+		name := commands[1]
+		action := "Restarting service:"
+		s := fromFile(name + ".json")
+		if s == nil {
+			printStatus(fmt.Sprintf(format, action, failed), ErrFile)
+		} else {
+			pid := s.getPid()
+			if pid == 0 {
+				err := s.run()
+				if err != nil {
+					printStatus(fmt.Sprintf(format, action, failed), err)
+				} else {
+					printStatus(fmt.Sprintf(format, action, success), err)
+				}
+			} else {
+				//first stop
+				err := s.stop()
+				if err != nil {
+					printStatus(fmt.Sprintf(format, action, failed), err)
+				} else {
+					err = s.run()
+					if err != nil {
+						printStatus(fmt.Sprintf(format, action, failed), err)
+					} else {
+						printStatus(fmt.Sprintf(format, action, success), err)
+					}
+				}
+				//then run
+			}
+		}
 		break
 	case "start":
 		name := commands[1]
