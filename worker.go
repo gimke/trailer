@@ -19,12 +19,14 @@ type Service struct {
 	Name      string
 	IsRunning bool
 	Pid       int
+	Loaded    bool
 	Config    *Config
 }
 
 type Config struct {
 	Name      string
 	Command   []string
+	RunAtLoad bool
 	KeepAlive bool
 }
 
@@ -35,6 +37,8 @@ func Do() {
 	services.GetList()
 	for _, service := range *services {
 		wg.Add(1)
+		//first run it
+		service.runAtLoad()
 		go service.monitor()
 	}
 	wg.Wait()
@@ -84,16 +88,9 @@ func (this *Service) monitor() {
 		if pid == 0 {
 			//not running keepalive
 			log.Printf("%s is not running\n", this.Name)
-			this.checkAndRun()
+			this.keepAlive()
 		} else {
-			process, _ := os.FindProcess(pid)
-			err := process.Signal(syscall.Signal(0))
-			if err != nil {
-				log.Printf("%s (%d) is not running %v\n", this.Name, pid, err)
-				this.checkAndRun()
-			} else {
-				log.Printf("%s (%d) is running\n", this.Name, pid)
-			}
+			log.Printf("%s (%d) is running\n", this.Name, pid)
 		}
 		time.Sleep(10 * time.Second)
 		if ShouldQuit {
@@ -102,8 +99,18 @@ func (this *Service) monitor() {
 		}
 	}
 }
-
-func (this *Service) checkAndRun() {
+func (this *Service) runAtLoad() {
+	if this.Config.RunAtLoad {
+		pid := this.getPid()
+		if pid == 0 {
+			err := this.run()
+			if err != nil {
+				log.Printf("%s running error %v\n", this.Name, err)
+			}
+		}
+	}
+}
+func (this *Service) keepAlive() {
 	if this.Config.KeepAlive {
 		err := this.run()
 		if err != nil {
