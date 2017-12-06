@@ -94,19 +94,34 @@ func consoleExec(commands []string) {
 		}
 		break
 	case "list":
-		fmt.Printf("%-4s %-20s %-10v %-10s\n", "Num", "Name", "Status", "Pid")
+		fmt.Printf("%-4s %-6s %-20s %-10s %-10s %-10s\n", "Num", "Pid", "Name", "Status", "RunAtLoad", "KeepAlive")
 		services := NewServices()
 		services.GetList()
 		for index, s := range *services {
 			color := green
 			running := "RUNNING"
+			runAtLoad := "N"
+			runAtLoadColor := red
+			if s.Config.RunAtLoad {
+				runAtLoad = "Y"
+				runAtLoadColor = green
+			}
+			keepAlive := "N"
+			keepAliveColor := red
+			if s.Config.KeepAlive {
+				keepAlive = "Y"
+				keepAliveColor = green
+			}
 			pid := strconv.Itoa(s.Pid)
 			if !s.IsRunning {
 				running = "STOPPED"
 				color = red
 				pid = "-"
 			}
-			fmt.Printf("%-4s %-20s %s%-10s%s %-10s\n", strconv.Itoa(index+1), s.Name, color, running, reset, pid)
+			fmt.Printf("%-4s %-6s %-20s %s%-10s%s %s%-10s%s %s%-10s%s\n", strconv.Itoa(index+1), pid, s.Name,
+				color, running, reset,
+				runAtLoadColor,runAtLoad,reset,
+				keepAliveColor,keepAlive,reset)
 		}
 		break
 	default:
