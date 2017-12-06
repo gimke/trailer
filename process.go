@@ -19,7 +19,7 @@ func processStart() (string, error) {
 	if pid := s.getPid(); pid != 0 {
 		return fmt.Sprintf(format, action, failed), ErrAlreadyRunning
 	} else {
-		cmd := exec.Command(Binary, "-run")
+		cmd := exec.Command(Binary, "-daemon")
 		cmd.Dir = BinaryDir
 		err := cmd.Start()
 		if err != nil {

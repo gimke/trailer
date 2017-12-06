@@ -5,29 +5,28 @@
 ### daemon
 ```bash
 Usage of ./trailer:
-  -c    Console
+  -c	Console
   -console
-        Console
-  -q    Stop service
-  -r    Restart service
+    	Console
+  -daemon
+    	Run as service
+  -q	Stop service
+  -r	Restart service
   -restart
-        Restart service
-  -run
-        Run as service
-  -s    Start service
+    	Restart service
+  -s	Start service
   -start
-        Start service
+    	Start service
   -stop
-        Stop service
-  -v    Display version
+    	Stop service
+  -v	Display version
   -version
-        Display version
-
+    	Display version
 ```
 
 ### console
 ```bash
-Usage: add | remove | list | start | stop | restart | status
+Usage: list | start | stop | restart | status
 ```
 
 ### config
@@ -35,8 +34,16 @@ Usage: add | remove | list | start | stop | restart | status
 ```json
 {
   "name": "demo",
-  "command": ["/Users/yanggang/go/src/github.com/gimke/trailer/demo/demo"],
+  "command": ["/home/demo/demo"],
   "runAtLoad": true,
-  "keepAlive": true
+  "keepAlive": false
+}
+```
+```json
+{
+  "name": "ping",
+  "command": ["ping","192.168.1.1"],
+  "runAtLoad": true,
+  "keepAlive": false
 }
 ```

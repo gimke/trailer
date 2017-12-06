@@ -23,7 +23,7 @@ func main() {
 	flag.BoolVar(&console, "console", false, consoleUsage)
 	flag.BoolVar(&console, "c", false, consoleUsage)
 
-	flag.BoolVar(&runAsService, "run", false, runAsServiceUsage)
+	flag.BoolVar(&runAsService, "daemon", false, runAsServiceUsage)
 
 	flag.Parse()
 
