@@ -58,9 +58,5 @@ func main() {
 		consoleExec(flag.Args())
 		return
 	}
-	if runAsService {
-		processWork()
-		return
-	}
-	flag.Usage()
+	processWork()
 }
