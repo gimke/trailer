@@ -1,30 +1,25 @@
 package main
 
 import (
-	"os"
 	"fmt"
-	"os/exec"
-	"io/ioutil"
-	"time"
 	"github.com/gimke/cartlog"
-	"strconv"
-	"os/signal"
-	"syscall"
+	"io/ioutil"
 	"log"
+	"os"
+	"os/exec"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
 )
-func pidExist(pidFile string) bool {
-	if _, err := os.Stat(pidFile); !os.IsNotExist(err) {
-		return true
-	} else {
-		return false
-	}
-}
+
 func processStart() (string, error) {
 	action := "Starting service:"
-	if pidExist(PidFile) {
+	s := Service{Name: BinaryName}
+	if pid := s.getPid(); pid != 0 {
 		return fmt.Sprintf(format, action, failed), ErrAlreadyRunning
 	} else {
-		cmd := exec.Command(Binary,"-run")
+		cmd := exec.Command(Binary, "-run")
 		cmd.Dir = BinaryDir
 		err := cmd.Start()
 		if err != nil {
@@ -36,16 +31,15 @@ func processStart() (string, error) {
 
 func processStop() (string, error) {
 	action := "Stopping service:"
-	content, err := ioutil.ReadFile(PidFile)
-	if err != nil {
+	s := Service{Name: BinaryName}
+	if pid := s.getPid(); pid == 0 {
 		return fmt.Sprintf(format, action, failed), ErrAlreadyStopped
 	} else {
 		quitStop := make(chan bool)
-		pid := string(content)
 		dir, _ := os.Getwd()
-		cmd := exec.Command("kill", pid)
+		cmd := exec.Command("kill", strconv.Itoa(pid))
 		cmd.Dir = dir
-		err = cmd.Start()
+		err := cmd.Start()
 		if err != nil {
 			return fmt.Sprintf(format, action, failed), err
 		}
@@ -53,7 +47,7 @@ func processStop() (string, error) {
 		go func() {
 			i := 0
 			for {
-				if !pidExist(PidFile) {
+				if pid := s.getPid(); pid == 0 {
 					quitStop <- true
 					break
 				}
@@ -69,9 +63,11 @@ func processStop() (string, error) {
 		return fmt.Sprintf(format, action, success), nil
 	}
 }
+
 //real work
 func processWork() {
-	if pidExist(PidFile) {
+	s := Service{Name: BinaryName}
+	if pid := s.getPid(); pid != 0 {
 		fmt.Fprintln(os.Stderr, "\033[31m"+ErrAlreadyRunning.Error()+"\033[0m")
 		os.Exit(1)
 	} else {
@@ -87,16 +83,17 @@ func processWork() {
 
 		go func() {
 			sig := <-sigs
-			log.Println(sig)
+			log.Println("get signal",sig)
 			ShouldQuit = true
 		}()
 		go func() {
+			log.Println("service is running")
 			Do()
 		}()
 
 		<-Quit
 		//delete pid
-		os.Remove(PidFile)
+		log.Println("service terminated")
+		s.deletePid()
 	}
 }
-

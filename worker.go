@@ -47,30 +47,35 @@ func NewServices() *Services {
 
 func (this *Services) GetList() {
 	files, err := ioutil.ReadDir(BinaryDir + "/services")
-	if err != nil {
-		log.Printf("Dir error: %v\n", err)
-	} else {
+	if err == nil {
 		for _, file := range files {
 			name := file.Name()
-			if filepath.Ext(name) == ".json" {
-				file, err := ioutil.ReadFile(BinaryDir + "/services/" + name)
-				if err != nil {
-					log.Printf("File error: %v\n", err)
-				} else {
-					var config = &Config{}
-					err = json.Unmarshal(file, &config)
-					if err == nil {
-						s := &Service{Name:config.Name}
-						pid := s.getPid()
-						s.Pid = pid
-						s.IsRunning = pid != 0
-						s.Config = config
-						*this = append(*this, s)
-					}
-				}
+			s := fromFile(name)
+			if s != nil {
+				*this = append(*this, s)
 			}
 		}
 	}
+}
+
+func fromFile(path string) *Service {
+	name := path
+	if filepath.Ext(name) == ".json" {
+		c, err := ioutil.ReadFile(BinaryDir + "/services/" + name)
+		if err == nil {
+			var config = &Config{}
+			err = json.Unmarshal(c, &config)
+			if err == nil {
+				s := &Service{Name: config.Name}
+				pid := s.getPid()
+				s.Pid = pid
+				s.IsRunning = pid != 0
+				s.Config = config
+				return s
+			}
+		}
+	}
+	return nil
 }
 
 func (this *Service) monitor() {
@@ -79,13 +84,13 @@ func (this *Service) monitor() {
 		if pid == 0 {
 			//not running keepalive
 			log.Printf("%s is not running\n", this.Name)
-			this.keep()
+			this.checkAndRun()
 		} else {
 			process, _ := os.FindProcess(pid)
 			err := process.Signal(syscall.Signal(0))
 			if err != nil {
 				log.Printf("%s (%d) is not running %v\n", this.Name, pid, err)
-				this.keep()
+				this.checkAndRun()
 			} else {
 				log.Printf("%s (%d) is running\n", this.Name, pid)
 			}
@@ -98,30 +103,55 @@ func (this *Service) monitor() {
 	}
 }
 
-func (this *Service) keep() {
+func (this *Service) checkAndRun() {
 	if this.Config.KeepAlive {
-		cmd := exec.Command(this.Config.Command[0], this.Config.Command[1:]...)
-		dir, _ := filepath.Abs(filepath.Dir(this.Config.Command[0]))
-		cmd.Dir = dir
-
-		err := cmd.Start()
+		err := this.run()
 		if err != nil {
 			log.Printf("%s running error %v\n", this.Name, err)
-		} else {
-			go func() {
-				errw := cmd.Wait()
-				log.Printf("%s (%d) stoped %v\n", this.Name, cmd.Process.Pid, errw)
-			}()
-			log.Printf("%s (%d) running success\n", this.Name, cmd.Process.Pid)
-			this.setPid(cmd.Process.Pid)
-			this.Pid = cmd.Process.Pid
-			this.IsRunning = true
 		}
 	} else {
 		this.deletePid()
 		this.Pid = 0
 		this.IsRunning = false
 	}
+}
+
+func (this *Service) run() error {
+	cmd := exec.Command(this.Config.Command[0], this.Config.Command[1:]...)
+	dir, _ := filepath.Abs(filepath.Dir(this.Config.Command[0]))
+	cmd.Dir = dir
+
+	err := cmd.Start()
+	if err != nil {
+		return err
+	} else {
+		go func() {
+			cmd.Wait()
+		}()
+		this.setPid(cmd.Process.Pid)
+		this.Pid = cmd.Process.Pid
+		this.IsRunning = true
+	}
+	return nil
+}
+
+func (this *Service) stop() error {
+	cmd := exec.Command("kill", strconv.Itoa(this.Pid))
+	dir, _ := filepath.Abs(filepath.Dir(this.Config.Command[0]))
+	cmd.Dir = dir
+
+	err := cmd.Start()
+	if err != nil {
+		return err
+	} else {
+		go func() {
+			cmd.Wait()
+		}()
+		this.deletePid()
+		this.Pid = 0
+		this.IsRunning = false
+	}
+	return nil
 }
 
 func (this *Service) getPid() int {
@@ -148,5 +178,5 @@ func (this *Service) setPid(pid int) error {
 	return nil
 }
 func (this *Service) deletePid() error {
-	return os.Remove(BinaryDir+"/run/"+this.Name+".pid")
+	return os.Remove(BinaryDir + "/run/" + this.Name + ".pid")
 }
