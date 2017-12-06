@@ -44,6 +44,7 @@ var (
 
 	// ErrAlreadyStopped appears if try to stop already stopped service
 	ErrAlreadyStopped = errors.New("Service has already been stopped")
+	ErrFile = errors.New("Load config file error")
 
 	success = "[\033[32m" + fmt.Sprintf("%-6s", fmt.Sprintf("%4s", "OK")) + "\033[0m]"
 	failed  = "[\033[31m" + fmt.Sprintf("%-6s", fmt.Sprintf("%6s", "FAILED")) + "\033[0m]"

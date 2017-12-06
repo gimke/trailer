@@ -27,39 +27,42 @@ func consoleExec(commands []string) {
 		break
 	case "start":
 		name := commands[1]
+		action := "Starting service:"
 		s := fromFile(name + ".json")
 		if s == nil {
-			fmt.Printf("load %s error\n", name)
-		}
-		pid := s.getPid()
-		if pid == 0 {
-			err := s.run()
-			if err != nil {
-				fmt.Printf("start %s error %v\n", name, err)
-
-			} else {
-				fmt.Printf("start %s (%d) success\n", name, s.Pid)
-			}
+			printStatus(fmt.Sprintf(format, action, failed), ErrFile)
 		} else {
-			fmt.Printf("%s is running\n", name)
+			pid := s.getPid()
+			if pid == 0 {
+				err := s.run()
+				if err != nil {
+					printStatus(fmt.Sprintf(format, action, failed), err)
+				} else {
+					printStatus(fmt.Sprintf(format, action, success), err)
+				}
+			} else {
+				printStatus(fmt.Sprintf(format, action, failed), ErrAlreadyRunning)
+			}
 		}
 		break
 	case "stop":
 		name := commands[1]
+		action := "Stopping service:"
 		s := fromFile(name + ".json")
 		if s == nil {
-			fmt.Printf("load %s error\n", name)
-		}
-		pid := s.getPid()
-		if pid != 0 {
-			err := s.stop()
-			if err != nil {
-				fmt.Printf("stop %s error %v\n", name, err)
-			} else {
-				fmt.Printf("stop %s (%d) success\n", name, pid)
-			}
+			printStatus(fmt.Sprintf(format, action, failed), ErrFile)
 		} else {
-			fmt.Printf("%s is not running\n", name)
+			pid := s.getPid()
+			if pid != 0 {
+				err := s.stop()
+				if err != nil {
+					printStatus(fmt.Sprintf(format, action, failed), err)
+				} else {
+					printStatus(fmt.Sprintf(format, action, success), nil)
+				}
+			} else {
+				printStatus(fmt.Sprintf(format, action, failed), ErrAlreadyStopped)
+			}
 		}
 		break
 	case "list":
