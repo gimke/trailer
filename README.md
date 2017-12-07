@@ -3,6 +3,17 @@
 ## a daemon tool 
 
 ### daemon
+
+```bash
+go get github.com/gimke/trailer
+cd trailer
+go build
+cd demo
+go build
+cd ..
+./trailer -s
+./trailer -c
+```
 ```txt
 Usage of ./trailer:
   -c	Console
