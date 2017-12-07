@@ -73,8 +73,7 @@ func (*process) Work() {
 		fmt.Fprintln(os.Stderr, "\033[31m"+ErrAlreadyRunning.Error()+"\033[0m")
 		os.Exit(1)
 	} else {
-		l := cartlog.Log{}
-		l.New()
+		cartlog.FileSystem("./logs")
 		pid := []byte(strconv.Itoa(os.Getpid()))
 		if _, err := os.Stat(BinaryDir + "/run"); os.IsNotExist(err) {
 			os.Mkdir(BinaryDir+"/run", os.ModePerm)
