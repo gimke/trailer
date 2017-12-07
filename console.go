@@ -23,7 +23,7 @@ func consoleExec(commands []string) {
 		break
 	case "restart":
 		if commands[1] == "all" {
-			services := NewServices()
+			services := newServices()
 			services.GetList()
 			for _, s := range *services {
 				consoleRestartService(s.Name)
@@ -34,7 +34,7 @@ func consoleExec(commands []string) {
 		break
 	case "start":
 		if commands[1] == "all" {
-			services := NewServices()
+			services := newServices()
 			services.GetList()
 			for _, s := range *services {
 				consoleStartService(s.Name)
@@ -45,7 +45,7 @@ func consoleExec(commands []string) {
 		break
 	case "stop":
 		if commands[1] == "all" {
-			services := NewServices()
+			services := newServices()
 			services.GetList()
 			for _, s := range *services {
 				consoleStopService(s.Name)
@@ -57,7 +57,7 @@ func consoleExec(commands []string) {
 		break
 	case "list":
 		fmt.Printf("%-4s %-6s %-20s %-10s %-10s %-10s\n", "Num", "Pid", "Name", "Status", "RunAtLoad", "KeepAlive")
-		services := NewServices()
+		services := newServices()
 		services.GetList()
 		for index, s := range *services {
 			color := green

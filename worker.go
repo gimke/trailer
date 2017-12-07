@@ -39,7 +39,7 @@ type Config struct {
 var wg sync.WaitGroup
 
 func Do() {
-	services := NewServices()
+	services := newServices()
 	services.GetList()
 	for _, service := range *services {
 		wg.Add(1)
@@ -51,20 +51,8 @@ func Do() {
 	Quit <- true
 }
 
-func NewServices() *Services {
+func newServices() *Services {
 	return &Services{}
-}
-
-func (this *Services) GetList() {
-	files, err := ioutil.ReadDir(BinaryDir + "/services")
-	if err == nil {
-		for _, file := range files {
-			s := fromFile(file.Name())
-			if s != nil {
-				*this = append(*this, s)
-			}
-		}
-	}
 }
 
 func fromName(name string) *Service {
@@ -107,15 +95,23 @@ func fromFile(fileName string) *Service {
 	return nil
 }
 
+func (this *Services) GetList() {
+	files, err := ioutil.ReadDir(BinaryDir + "/services")
+	if err == nil {
+		for _, file := range files {
+			s := fromFile(file.Name())
+			if s != nil {
+				*this = append(*this, s)
+			}
+		}
+	}
+}
+
 func (this *Service) monitor() {
 	for {
 		pid := this.getPID()
 		if pid == 0 {
-			//not running keepalive
-			log.Printf("%s is not running\n", this.Name)
 			this.keepAlive()
-		} else {
-			log.Printf("%s (%d) is running\n", this.Name, pid)
 		}
 		time.Sleep(10 * time.Second)
 		if ShouldQuit {
