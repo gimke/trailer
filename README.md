@@ -6,7 +6,7 @@
 
 ```bash
 go get -u -d github.com/gimke/trailer
-cd trailer
+cd ~/go/src/github.com/gimke/trailer
 go build
 cd demo
 go build
