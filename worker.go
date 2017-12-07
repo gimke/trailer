@@ -146,8 +146,9 @@ func (this *Service) keepAlive() {
 }
 
 func (this *Service) run() error {
-	cmd := exec.Command(this.Config.Command[0], this.Config.Command[1:]...)
+	command, _:=filepath.Abs(this.Config.Command[0])
 	dir, _ := filepath.Abs(filepath.Dir(this.Config.Command[0]))
+	cmd := exec.Command(command, this.Config.Command[1:]...)
 	cmd.Dir = dir
 
 	err := cmd.Start()

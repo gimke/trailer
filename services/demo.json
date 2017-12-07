@@ -1,7 +1,7 @@
 {
   "name": "demo",
-  "command": ["./demo/demo"],
-  "pidFile": "./demo/demo.pid",
+  "command": ["demo/demo"],
+  "pidFile": "demo/demo.pid",
   "runAtLoad": true,
   "keepAlive": false
 }
