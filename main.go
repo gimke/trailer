@@ -30,8 +30,6 @@ func main() {
 	//get bin path
 	BinaryName = filepath.Base(os.Args[0])
 	BinaryDir, _ = filepath.Abs(filepath.Dir(os.Args[0]))
-	Binary = BinaryDir + "/" + BinaryName
-	PidDir = BinaryDir + "/run"
 	PidFile = BinaryDir + "/run/" + BinaryName + "." + PID
 
 	if version {

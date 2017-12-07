@@ -19,7 +19,7 @@ func processStart() (string, error) {
 	if pid := s.getPID(); pid != 0 {
 		return fmt.Sprintf(format, action, failed), ErrAlreadyRunning
 	} else {
-		cmd := exec.Command(Binary)
+		cmd := exec.Command(BinaryDir + "/" + BinaryName)
 		cmd.Dir = BinaryDir
 		err := cmd.Start()
 		if err != nil {
@@ -74,8 +74,8 @@ func processWork() {
 		l := cartlog.Log{}
 		l.New()
 		pid := []byte(strconv.Itoa(os.Getpid()))
-		if _, err := os.Stat(PidDir); os.IsNotExist(err) {
-			os.Mkdir(PidDir, os.ModePerm)
+		if _, err := os.Stat(BinaryDir + "/run"); os.IsNotExist(err) {
+			os.Mkdir(BinaryDir+"/run", os.ModePerm)
 		}
 		ioutil.WriteFile(PidFile, pid, 0666)
 		sigs := make(chan os.Signal, 1)
@@ -83,7 +83,7 @@ func processWork() {
 
 		go func() {
 			sig := <-sigs
-			log.Println("get signal",sig)
+			log.Println("get signal", sig)
 			ShouldQuit = true
 		}()
 		go func() {

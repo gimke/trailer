@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -29,8 +30,8 @@ type Config struct {
 	Name      string
 	Command   []string
 	PidFile   string `json:"pidFile" yaml:"pid_file"`
-	RunAtLoad bool `json:"runAtLoad" yaml:"run_at_load"`
-	KeepAlive bool `json:"keepAlive" yaml:"keep_alive"`
+	RunAtLoad bool   `json:"runAtLoad" yaml:"run_at_load"`
+	KeepAlive bool   `json:"keepAlive" yaml:"keep_alive"`
 }
 
 var wg sync.WaitGroup
@@ -145,9 +146,25 @@ func (this *Service) keepAlive() {
 	}
 }
 
+func (this *Service) abs(filePath string) string {
+	var command string
+	if path.IsAbs(filePath) {
+		//if abs
+		command = filePath
+	} else {
+		if strings.Index(filePath, string(os.PathSeparator)) > -1 {
+			command = path.Join(BinaryDir, filePath)
+		} else {
+			command = filePath
+		}
+	}
+	return command
+}
+
 func (this *Service) run() error {
-	command, _:=filepath.Abs(this.Config.Command[0])
-	dir, _ := filepath.Abs(filepath.Dir(this.Config.Command[0]))
+	command := this.abs(this.Config.Command[0])
+	dir := filepath.Dir(command)
+
 	cmd := exec.Command(command, this.Config.Command[1:]...)
 	cmd.Dir = dir
 
@@ -167,8 +184,6 @@ func (this *Service) run() error {
 
 func (this *Service) stop() error {
 	cmd := exec.Command("kill", strconv.Itoa(this.PID))
-	dir, _ := filepath.Abs(filepath.Dir(this.Config.Command[0]))
-	cmd.Dir = dir
 
 	err := cmd.Start()
 	if err != nil {
@@ -186,7 +201,8 @@ func (this *Service) stop() error {
 
 func (this *Service) getPIDPath() string {
 	if this.Config != nil && this.Config.PidFile != "" {
-		return this.Config.PidFile
+		pidFile := this.abs(this.Config.PidFile)
+		return pidFile
 	} else {
 		return BinaryDir + "/run/" + this.Name + ".pid"
 	}
