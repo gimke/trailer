@@ -16,7 +16,7 @@ import (
 func processStart() (string, error) {
 	action := "Starting service:"
 	s := Service{Name: BinaryName}
-	if pid := s.getPid(); pid != 0 {
+	if pid := s.getPID(); pid != 0 {
 		return fmt.Sprintf(format, action, failed), ErrAlreadyRunning
 	} else {
 		cmd := exec.Command(Binary)
@@ -32,7 +32,7 @@ func processStart() (string, error) {
 func processStop() (string, error) {
 	action := "Stopping service:"
 	s := Service{Name: BinaryName}
-	if pid := s.getPid(); pid == 0 {
+	if pid := s.getPID(); pid == 0 {
 		return fmt.Sprintf(format, action, failed), ErrAlreadyStopped
 	} else {
 		quitStop := make(chan bool)
@@ -47,7 +47,7 @@ func processStop() (string, error) {
 		go func() {
 			i := 0
 			for {
-				if pid := s.getPid(); pid == 0 {
+				if pid := s.getPID(); pid == 0 {
 					quitStop <- true
 					break
 				}
@@ -67,7 +67,7 @@ func processStop() (string, error) {
 //real work
 func processWork() {
 	s := Service{Name: BinaryName}
-	if pid := s.getPid(); pid != 0 {
+	if pid := s.getPID(); pid != 0 {
 		fmt.Fprintln(os.Stderr, "\033[31m"+ErrAlreadyRunning.Error()+"\033[0m")
 		os.Exit(1)
 	} else {
@@ -94,6 +94,6 @@ func processWork() {
 		<-Quit
 		//delete pid
 		log.Println("service terminated")
-		s.deletePid()
+		s.deletePID()
 	}
 }

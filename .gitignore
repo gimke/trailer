@@ -3,5 +3,7 @@ logs/
 run/
 services/
 demo/
+vendor/*
+!vendor/vendor.json
 pid
 trailer
