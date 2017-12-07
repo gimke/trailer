@@ -3,13 +3,13 @@
 ## a daemon tool 
 
 ### daemon
-```bash
+```yaml
 Usage of ./trailer:
   -c	Console
   -console
     	Console
   -daemon
-    	Run as service
+    	Run as service (Do not run in the terminal Run -s instead)
   -q	Stop service
   -r	Restart service
   -restart
@@ -30,21 +30,25 @@ Usage: list | start | stop | restart | status
 ```
 
 ### config
-> path services
+> config path ./services
 ```json
 {
-  "name": "demo",
-  "command": ["/home/demo/demo"],
+  "name": "ping",
+  "command": ["ping","192.168.1.1"],
   "runAtLoad": true,
   "keepAlive": false
 }
 ```
 ```yaml
-name: ping2
-command:
-  - ping
-  - 192.168.2.1
+name: demo
+env:
+  - MY_ENV=hello
 
+command:
+  - ./demo/demo
+
+pid_file: ./demo/demo.pid
+grace: false
 run_at_load: true
 keep_alive: false
 ```
