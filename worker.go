@@ -31,6 +31,7 @@ type Config struct {
 	Env       []string
 	Command   []string
 	PidFile   string `json:"pidFile" yaml:"pid_file"`
+	Grace     bool   `json:"grace" yaml:"grace"`
 	RunAtLoad bool   `json:"runAtLoad" yaml:"run_at_load"`
 	KeepAlive bool   `json:"keepAlive" yaml:"keep_alive"`
 }
@@ -123,6 +124,7 @@ func (this *Service) monitor() {
 		}
 	}
 }
+
 func (this *Service) runAtLoad() {
 	if this.Config.RunAtLoad {
 		pid := this.getPID()
@@ -134,6 +136,7 @@ func (this *Service) runAtLoad() {
 		}
 	}
 }
+
 func (this *Service) keepAlive() {
 	if this.Config.KeepAlive {
 		err := this.run()
@@ -189,6 +192,10 @@ func (this *Service) run() error {
 func (this *Service) stop() error {
 	cmd := exec.Command("kill", strconv.Itoa(this.PID))
 
+	this.deletePID()
+	this.PID = 0
+	this.IsRunning = false
+
 	err := cmd.Start()
 	if err != nil {
 		return err
@@ -196,9 +203,34 @@ func (this *Service) stop() error {
 		go func() {
 			cmd.Wait()
 		}()
-		this.deletePID()
-		this.PID = 0
-		this.IsRunning = false
+
+	}
+	return nil
+}
+
+func (this *Service) restart() error {
+	if this.Config.Grace {
+		cmd := exec.Command("kill", "-USR2",strconv.Itoa(this.PID))
+
+		err := cmd.Start()
+		if err != nil {
+			return err
+		} else {
+			go func() {
+				cmd.Wait()
+			}()
+		}
+		return nil
+	} else {
+		err := this.stop()
+		if err != nil {
+			return err
+		} else {
+			err = this.run()
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -235,6 +267,7 @@ func (this *Service) setPID(pid int) error {
 	}
 	return nil
 }
+
 func (this *Service) deletePID() error {
 	return os.Remove(this.getPIDPath())
 }

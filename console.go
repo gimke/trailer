@@ -145,19 +145,12 @@ func consoleRestartService(name string) {
 				printStatus(fmt.Sprintf(format, action, success), err)
 			}
 		} else {
-			//first stop
-			err := s.stop()
+			err := s.restart()
 			if err != nil {
 				printStatus(fmt.Sprintf(format, action, failed), err)
 			} else {
-				err = s.run()
-				if err != nil {
-					printStatus(fmt.Sprintf(format, action, failed), err)
-				} else {
-					printStatus(fmt.Sprintf(format, action, success), err)
-				}
+				printStatus(fmt.Sprintf(format, action, success), err)
 			}
-			//then run
 		}
 	}
 }

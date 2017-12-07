@@ -2,7 +2,7 @@
 logs/
 run/
 services/*
-!services/demo.json
+!services/demo.yaml
 demo/
 vendor/*
 !vendor/vendor.json

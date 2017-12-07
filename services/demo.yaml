@@ -1,0 +1,10 @@
+name: demo
+env:
+  - MY_ENV=hello
+
+command:
+  - ./demo/demo
+
+pid_file: ./demo/demo.pid
+run_at_load: true
+keep_alive: false
