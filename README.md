@@ -3,7 +3,7 @@
 ## a daemon tool 
 
 ### daemon
-```yaml
+```txt
 Usage of ./trailer:
   -c	Console
   -console
