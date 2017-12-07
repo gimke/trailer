@@ -31,6 +31,8 @@ Usage: list | start | stop | restart | status
 
 ### config
 > config path ./services
+
+#### json
 ```json
 {
   "name": "ping",
@@ -39,6 +41,7 @@ Usage: list | start | stop | restart | status
   "keepAlive": false
 }
 ```
+#### yaml
 ```yaml
 name: demo
 env:
