@@ -5,7 +5,7 @@
 ### daemon
 
 ```bash
-go get github.com/gimke/trailer
+go get -u github.com/gimke/trailer
 cd trailer
 go build
 cd demo
