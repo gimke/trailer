@@ -58,8 +58,7 @@ func (this *Services) GetList() {
 	files, err := ioutil.ReadDir(BinaryDir + "/services")
 	if err == nil {
 		for _, file := range files {
-			name := strings.Split(file.Name(), ".")[0]
-			s := fromFile(name)
+			s := fromFile(file.Name())
 			if s != nil {
 				*this = append(*this, s)
 			}
@@ -67,31 +66,32 @@ func (this *Services) GetList() {
 	}
 }
 
-func fromFile(path string) *Service {
-	name := path
+func fromName(name string) *Service {
 	//check json file or yaml file
-	fileName := BinaryDir + "/services/" + name
-	if _, err := os.Stat(fileName + ".json"); !os.IsNotExist(err) {
-		//find json file
-		c, err := ioutil.ReadFile(fileName + ".json")
-		if err == nil {
-			var config = &Config{}
-			err = json.Unmarshal(c, &config)
-			if err == nil {
-				s := &Service{Name: config.Name, Config: config}
-				pid := s.getPID()
-				s.PID = pid
-				s.IsRunning = pid != 0
-				return s
-			}
-		}
-	} else {
-		if _, err := os.Stat(fileName + ".yaml"); !os.IsNotExist(err) {
-			//find yaml file
-			c, err := ioutil.ReadFile(fileName + ".yaml")
+	s := fromFile(name + ".json")
+	if s == nil {
+		s = fromFile(name + ".yaml")
+	}
+	return s
+}
+
+func fromFile(fileName string) *Service {
+	//check json file or yaml file
+	ext := filepath.Ext(fileName)
+	if ext == ".json" || ext == ".yaml" {
+		if _, err := os.Stat(BinaryDir + "/services/" + fileName); !os.IsNotExist(err) {
+			//find json file
+			c, err := ioutil.ReadFile(BinaryDir + "/services/" + fileName)
 			if err == nil {
 				var config = &Config{}
-				err = yaml.Unmarshal(c, &config)
+				switch ext {
+				case ".json":
+					err = json.Unmarshal(c, &config)
+					break
+				case ".yaml":
+					err = yaml.Unmarshal(c, &config)
+					break
+				}
 				if err == nil {
 					s := &Service{Name: config.Name, Config: config}
 					pid := s.getPID()
@@ -168,7 +168,7 @@ func (this *Service) run() error {
 
 	cmd := exec.Command(command, this.Config.Command[1:]...)
 	if len(this.Config.Env) > 0 {
-		cmd.Env = append(os.Environ(),this.Config.Env...)
+		cmd.Env = append(os.Environ(), this.Config.Env...)
 	}
 	cmd.Dir = dir
 

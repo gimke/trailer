@@ -94,7 +94,7 @@ func consoleExec(commands []string) {
 
 func consoleStartService(name string) {
 	action := "Starting service " + name + ":"
-	s := fromFile(name)
+	s := fromName(name)
 	if s == nil {
 		printStatus(fmt.Sprintf(format, action, failed), ErrFile)
 	} else {
@@ -113,7 +113,7 @@ func consoleStartService(name string) {
 }
 func consoleStopService(name string) {
 	action := "Stopping service " + name + ":"
-	s := fromFile(name)
+	s := fromName(name)
 	if s == nil {
 		printStatus(fmt.Sprintf(format, action, failed), ErrFile)
 	} else {
@@ -132,7 +132,7 @@ func consoleStopService(name string) {
 }
 func consoleRestartService(name string) {
 	action := "Restarting service " + name + ":"
-	s := fromFile(name)
+	s := fromName(name)
 	if s == nil {
 		printStatus(fmt.Sprintf(format, action, failed), ErrFile)
 	} else {
