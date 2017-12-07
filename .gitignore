@@ -3,6 +3,7 @@ logs/
 run/
 services/*
 !services/demo.yaml
+!services/ping.json
 demo/
 vendor/*
 !vendor/vendor.json
