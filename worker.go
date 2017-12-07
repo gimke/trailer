@@ -28,6 +28,7 @@ type Service struct {
 
 type Config struct {
 	Name      string
+	Env       []string
 	Command   []string
 	PidFile   string `json:"pidFile" yaml:"pid_file"`
 	RunAtLoad bool   `json:"runAtLoad" yaml:"run_at_load"`
@@ -166,6 +167,9 @@ func (this *Service) run() error {
 	dir := filepath.Dir(command)
 
 	cmd := exec.Command(command, this.Config.Command[1:]...)
+	if len(this.Config.Env) > 0 {
+		cmd.Env = append(os.Environ(),this.Config.Env...)
+	}
 	cmd.Dir = dir
 
 	err := cmd.Start()
