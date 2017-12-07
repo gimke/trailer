@@ -39,11 +39,12 @@ Usage: list | start | stop | restart | status
   "keepAlive": false
 }
 ```
-```json
-{
-  "name": "ping",
-  "command": ["ping","192.168.1.1"],
-  "runAtLoad": true,
-  "keepAlive": false
-}
+```yaml
+name: ping2
+command:
+  - ping
+  - 192.168.2.1
+
+run_at_load: true
+keep_alive: false
 ```
