@@ -1,7 +1,7 @@
 .idea/
 logs/
 run/
-services/
+services/*
 demo/
 vendor/*
 !vendor/vendor.json
