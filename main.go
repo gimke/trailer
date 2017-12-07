@@ -8,53 +8,63 @@ import (
 
 func main() {
 
-	flag.BoolVar(&start, "start", false, startUsage)
-	flag.BoolVar(&start, "s", false, startUsage)
+	var (
+		startFlag        bool
+		stopFlag         bool
+		restartFlag      bool
+		versionFlag      bool
+		consoleFlag      bool
+		runAsServiceFlag bool
+	)
 
-	flag.BoolVar(&stop, "stop", false, stopUsage)
-	flag.BoolVar(&stop, "q", false, stopUsage)
+	flag.BoolVar(&startFlag, "start", false, startUsage)
+	flag.BoolVar(&startFlag, "s", false, startUsage)
 
-	flag.BoolVar(&restart, "restart", false, restartUsage)
-	flag.BoolVar(&restart, "r", false, restartUsage)
+	flag.BoolVar(&stopFlag, "stop", false, stopUsage)
+	flag.BoolVar(&stopFlag, "q", false, stopUsage)
 
-	flag.BoolVar(&version, "version", false, versionUsage)
-	flag.BoolVar(&version, "v", false, versionUsage)
+	flag.BoolVar(&restartFlag, "restart", false, restartUsage)
+	flag.BoolVar(&restartFlag, "r", false, restartUsage)
 
-	flag.BoolVar(&console, "console", false, consoleUsage)
-	flag.BoolVar(&console, "c", false, consoleUsage)
+	flag.BoolVar(&versionFlag, "version", false, versionUsage)
+	flag.BoolVar(&versionFlag, "v", false, versionUsage)
 
-	flag.BoolVar(&runAsService, "daemon", false, runAsServiceUsage)
+	flag.BoolVar(&consoleFlag, "console", false, consoleUsage)
+	flag.BoolVar(&consoleFlag, "c", false, consoleUsage)
+
+	flag.BoolVar(&runAsServiceFlag, "daemon", false, runAsServiceUsage)
 
 	flag.Parse()
-
 	//get bin path
 	BinaryName = filepath.Base(os.Args[0])
 	BinaryDir, _ = filepath.Abs(filepath.Dir(os.Args[0]))
 	PidFile = BinaryDir + "/run/" + BinaryName + "." + PID
 
-	if version {
+	p := process{}
+	if versionFlag {
 		printStatus(VERSION, nil)
 		return
 	}
-	if start {
-		status, err := processStart()
+	if startFlag {
+		status, err := p.Start()
 		printStatus(status, err)
 		return
 	}
-	if stop {
-		status, err := processStop()
+	if stopFlag {
+		status, err := p.Stop()
 		printStatus(status, err)
 		return
 	}
-	if restart {
-		processStop()
-		status, err := processStart()
+	if restartFlag {
+		p.Stop()
+		status, err := p.Start()
 		printStatus(status, err)
 		return
 	}
-	if console {
-		consoleExec(flag.Args())
+	if consoleFlag {
+		c := console{}
+		c.Exec(flag.Args())
 		return
 	}
-	processWork()
+	p.Work()
 }

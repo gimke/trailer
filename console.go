@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strconv"
 )
+type console struct {}
 
-func consoleExec(commands []string) {
+func (this *console) Exec(commands []string) {
 	usage := "Usage: list | start | stop | restart | status"
 	if len(commands) == 0 {
 		fmt.Println(usage)
@@ -13,8 +14,8 @@ func consoleExec(commands []string) {
 	}
 	switch commands[0] {
 	case "status":
-		s := Service{Name: BinaryName}
-		thisPid := s.getPID()
+		s := service{Name: BinaryName}
+		thisPid := s.GetPID()
 		if thisPid == 0 {
 			fmt.Printf("%s is %s%s%s\n", BinaryName, red, "STOPPED", reset)
 		} else {
@@ -23,35 +24,35 @@ func consoleExec(commands []string) {
 		break
 	case "restart":
 		if commands[1] == "all" {
-			services := newServices()
-			services.GetList()
-			for _, s := range *services {
-				consoleRestartService(s.Name)
+			ss := newServices()
+			ss.GetList()
+			for _, s := range *ss {
+				this.Restart(s.Name)
 			}
 		} else {
-			consoleRestartService(commands[1])
+			this.Restart(commands[1])
 		}
 		break
 	case "start":
 		if commands[1] == "all" {
-			services := newServices()
-			services.GetList()
-			for _, s := range *services {
-				consoleStartService(s.Name)
+			ss := newServices()
+			ss.GetList()
+			for _, s := range *ss {
+				this.Start(s.Name)
 			}
 		} else {
-			consoleStartService(commands[1])
+			this.Start(commands[1])
 		}
 		break
 	case "stop":
 		if commands[1] == "all" {
-			services := newServices()
-			services.GetList()
-			for _, s := range *services {
-				consoleStopService(s.Name)
+			ss := newServices()
+			ss.GetList()
+			for _, s := range *ss {
+				this.Stop(s.Name)
 			}
 		} else {
-			consoleStopService(commands[1])
+			this.Stop(commands[1])
 		}
 
 		break
@@ -92,15 +93,15 @@ func consoleExec(commands []string) {
 	}
 }
 
-func consoleStartService(name string) {
+func (*console) Start(name string) {
 	action := "Starting service " + name + ":"
 	s := fromName(name)
 	if s == nil {
 		printStatus(fmt.Sprintf(format, action, failed), ErrFile)
 	} else {
-		pid := s.getPID()
+		pid := s.GetPID()
 		if pid == 0 {
-			err := s.run()
+			err := s.Start()
 			if err != nil {
 				printStatus(fmt.Sprintf(format, action, failed), err)
 			} else {
@@ -111,15 +112,15 @@ func consoleStartService(name string) {
 		}
 	}
 }
-func consoleStopService(name string) {
+func (*console) Stop(name string) {
 	action := "Stopping service " + name + ":"
 	s := fromName(name)
 	if s == nil {
 		printStatus(fmt.Sprintf(format, action, failed), ErrFile)
 	} else {
-		pid := s.getPID()
+		pid := s.GetPID()
 		if pid != 0 {
-			err := s.stop()
+			err := s.Stop()
 			if err != nil {
 				printStatus(fmt.Sprintf(format, action, failed), err)
 			} else {
@@ -130,22 +131,22 @@ func consoleStopService(name string) {
 		}
 	}
 }
-func consoleRestartService(name string) {
+func (*console) Restart(name string) {
 	action := "Restarting service " + name + ":"
 	s := fromName(name)
 	if s == nil {
 		printStatus(fmt.Sprintf(format, action, failed), ErrFile)
 	} else {
-		pid := s.getPID()
+		pid := s.GetPID()
 		if pid == 0 {
-			err := s.run()
+			err := s.Start()
 			if err != nil {
 				printStatus(fmt.Sprintf(format, action, failed), err)
 			} else {
 				printStatus(fmt.Sprintf(format, action, success), err)
 			}
 		} else {
-			err := s.restart()
+			err := s.Restart()
 			if err != nil {
 				printStatus(fmt.Sprintf(format, action, failed), err)
 			} else {

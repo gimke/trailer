@@ -22,12 +22,6 @@ const (
 )
 
 var (
-	start        bool
-	stop         bool
-	restart      bool
-	version      bool
-	console      bool
-	runAsService bool
 
 	BinaryName string
 	BinaryDir  string

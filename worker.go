@@ -16,17 +16,17 @@ import (
 	"time"
 )
 
-type Services []*Service
+type services []*service
 
-type Service struct {
+type service struct {
 	Name      string
 	IsRunning bool
 	PID       int
 	Loaded    bool
-	Config    *Config
+	Config    *config
 }
 
-type Config struct {
+type config struct {
 	Name      string
 	Env       []string
 	Command   []string
@@ -39,23 +39,23 @@ type Config struct {
 var wg sync.WaitGroup
 
 func Do() {
-	services := newServices()
-	services.GetList()
-	for _, service := range *services {
+	ss := newServices()
+	ss.GetList()
+	for _, s := range *ss {
 		wg.Add(1)
 		//first run it
-		service.runAtLoad()
-		go service.monitor()
+		s.RunAtLoad()
+		go s.Monitor()
 	}
 	wg.Wait()
 	Quit <- true
 }
 
-func newServices() *Services {
-	return &Services{}
+func newServices() *services {
+	return &services{}
 }
 
-func fromName(name string) *Service {
+func fromName(name string) *service {
 	//check json file or yaml file
 	s := fromFile(name + ".json")
 	if s == nil {
@@ -64,7 +64,7 @@ func fromName(name string) *Service {
 	return s
 }
 
-func fromFile(fileName string) *Service {
+func fromFile(fileName string) *service {
 	//check json file or yaml file
 	ext := filepath.Ext(fileName)
 	if ext == ".json" || ext == ".yaml" {
@@ -72,7 +72,7 @@ func fromFile(fileName string) *Service {
 			//find json file
 			c, err := ioutil.ReadFile(BinaryDir + "/services/" + fileName)
 			if err == nil {
-				var config = &Config{}
+				var config = &config{}
 				switch ext {
 				case ".json":
 					err = json.Unmarshal(c, &config)
@@ -82,8 +82,8 @@ func fromFile(fileName string) *Service {
 					break
 				}
 				if err == nil {
-					s := &Service{Name: config.Name, Config: config}
-					pid := s.getPID()
+					s := &service{Name: config.Name, Config: config}
+					pid := s.GetPID()
 					s.PID = pid
 					s.IsRunning = pid != 0
 					return s
@@ -95,7 +95,7 @@ func fromFile(fileName string) *Service {
 	return nil
 }
 
-func (this *Services) GetList() {
+func (this *services) GetList() {
 	files, err := ioutil.ReadDir(BinaryDir + "/services")
 	if err == nil {
 		for _, file := range files {
@@ -107,11 +107,11 @@ func (this *Services) GetList() {
 	}
 }
 
-func (this *Service) monitor() {
+func (this *service) Monitor() {
 	for {
-		pid := this.getPID()
+		pid := this.GetPID()
 		if pid == 0 {
-			this.keepAlive()
+			this.KeepAlive()
 		}
 		time.Sleep(10 * time.Second)
 		if ShouldQuit {
@@ -121,11 +121,11 @@ func (this *Service) monitor() {
 	}
 }
 
-func (this *Service) runAtLoad() {
+func (this *service) RunAtLoad() {
 	if this.Config.RunAtLoad {
-		pid := this.getPID()
+		pid := this.GetPID()
 		if pid == 0 {
-			err := this.run()
+			err := this.Start()
 			if err != nil {
 				log.Printf("%s running error %v\n", this.Name, err)
 			}
@@ -133,20 +133,20 @@ func (this *Service) runAtLoad() {
 	}
 }
 
-func (this *Service) keepAlive() {
+func (this *service) KeepAlive() {
 	if this.Config.KeepAlive {
-		err := this.run()
+		err := this.Start()
 		if err != nil {
 			log.Printf("%s running error %v\n", this.Name, err)
 		}
 	} else {
-		this.deletePID()
+		this.DeletePID()
 		this.PID = 0
 		this.IsRunning = false
 	}
 }
 
-func (this *Service) abs(filePath string) string {
+func (this *service) abs(filePath string) string {
 	var command string
 	if path.IsAbs(filePath) {
 		//if abs
@@ -161,7 +161,7 @@ func (this *Service) abs(filePath string) string {
 	return command
 }
 
-func (this *Service) run() error {
+func (this *service) Start() error {
 	command := this.abs(this.Config.Command[0])
 	dir := filepath.Dir(command)
 
@@ -178,17 +178,17 @@ func (this *Service) run() error {
 		go func() {
 			cmd.Wait()
 		}()
-		this.setPID(cmd.Process.Pid)
+		this.SetPID(cmd.Process.Pid)
 		this.PID = cmd.Process.Pid
 		this.IsRunning = true
 	}
 	return nil
 }
 
-func (this *Service) stop() error {
+func (this *service) Stop() error {
 	cmd := exec.Command("kill", strconv.Itoa(this.PID))
 
-	this.deletePID()
+	this.DeletePID()
 	this.PID = 0
 	this.IsRunning = false
 
@@ -204,7 +204,7 @@ func (this *Service) stop() error {
 	return nil
 }
 
-func (this *Service) restart() error {
+func (this *service) Restart() error {
 	if this.Config.Grace {
 		cmd := exec.Command("kill", "-USR2",strconv.Itoa(this.PID))
 
@@ -218,11 +218,11 @@ func (this *Service) restart() error {
 		}
 		return nil
 	} else {
-		err := this.stop()
+		err := this.Stop()
 		if err != nil {
 			return err
 		} else {
-			err = this.run()
+			err = this.Start()
 			if err != nil {
 				return err
 			}
@@ -231,7 +231,7 @@ func (this *Service) restart() error {
 	return nil
 }
 
-func (this *Service) getPIDPath() string {
+func (this *service) GetPIDPath() string {
 	if this.Config != nil && this.Config.PidFile != "" {
 		pidFile := this.abs(this.Config.PidFile)
 		return pidFile
@@ -240,8 +240,8 @@ func (this *Service) getPIDPath() string {
 	}
 }
 
-func (this *Service) getPID() int {
-	content, err := ioutil.ReadFile(this.getPIDPath())
+func (this *service) GetPID() int {
+	content, err := ioutil.ReadFile(this.GetPIDPath())
 	if err != nil {
 		return 0
 	} else {
@@ -255,15 +255,15 @@ func (this *Service) getPID() int {
 	}
 }
 
-func (this *Service) setPID(pid int) error {
+func (this *service) SetPID(pid int) error {
 	p := []byte(strconv.Itoa(pid))
-	err := ioutil.WriteFile(this.getPIDPath(), p, 0666)
+	err := ioutil.WriteFile(this.GetPIDPath(), p, 0666)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (this *Service) deletePID() error {
-	return os.Remove(this.getPIDPath())
+func (this *service) DeletePID() error {
+	return os.Remove(this.GetPIDPath())
 }
