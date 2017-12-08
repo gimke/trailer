@@ -14,7 +14,6 @@ func main() {
 		restartFlag      bool
 		versionFlag      bool
 		consoleFlag      bool
-		runAsServiceFlag bool
 	)
 
 	flag.BoolVar(&startFlag, "start", false, startUsage)
@@ -31,8 +30,6 @@ func main() {
 
 	flag.BoolVar(&consoleFlag, "console", false, consoleUsage)
 	flag.BoolVar(&consoleFlag, "c", false, consoleUsage)
-
-	flag.BoolVar(&runAsServiceFlag, "daemon", false, runAsServiceUsage)
 
 	flag.Parse()
 	//get bin path

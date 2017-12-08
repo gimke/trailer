@@ -18,7 +18,6 @@ const (
 	restartUsage      = "Restart service"
 	versionUsage      = "Display version"
 	consoleUsage      = "Console"
-	runAsServiceUsage = "Run as service (Do not run in the terminal Run -s instead)"
 )
 
 var (
