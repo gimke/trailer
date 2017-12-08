@@ -12,7 +12,7 @@ import (
 func main() {
 	quit := make(chan bool)
 	cartlog.Standard()
-	cartlog.FileSystem("./logs")
+	//cartlog.FileSystem("./logs")
 	logger := cartlog.GetLogger()
 	myenv := os.Getenv("MY_ENV")
 	var pid = []byte(strconv.Itoa(os.Getpid()))
