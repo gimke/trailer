@@ -27,10 +27,13 @@ type service struct {
 }
 
 type config struct {
-	Name      string
-	Env       []string
-	Command   []string
-	PidFile   string `json:"pidFile" yaml:"pid_file"`
+	Name    string
+	Env     []string
+	Command []string
+	PidFile string `json:"pidFile" yaml:"pid_file"`
+
+	LogPath   string `json:"logPath" yaml:"log_path"`
+	ErrPath   string `json:"errPath" yaml:"err_path"`
 	Grace     bool   `json:"grace" yaml:"grace"`
 	RunAtLoad bool   `json:"runAtLoad" yaml:"run_at_load"`
 	KeepAlive bool   `json:"keepAlive" yaml:"keep_alive"`
@@ -160,6 +163,14 @@ func (this *service) abs(filePath string) string {
 	}
 	return command
 }
+func makeFile(path string) *os.File {
+	dir := filepath.Dir(path)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		os.MkdirAll(dir, os.ModePerm)
+	}
+	file, _ := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	return file
+}
 
 func (this *service) Start() error {
 	command := this.abs(this.Config.Command[0])
@@ -170,6 +181,15 @@ func (this *service) Start() error {
 		cmd.Env = append(os.Environ(), this.Config.Env...)
 	}
 	cmd.Dir = dir
+
+	if this.Config.LogPath != "" {
+		out := makeFile(this.Config.LogPath)
+		cmd.Stdout = out
+	}
+	if this.Config.ErrPath != "" {
+		err := makeFile(this.Config.ErrPath)
+		cmd.Stderr = err
+	}
 
 	err := cmd.Start()
 	if err != nil {
@@ -206,7 +226,7 @@ func (this *service) Stop() error {
 
 func (this *service) Restart() error {
 	if this.Config.Grace {
-		cmd := exec.Command("kill", "-USR2",strconv.Itoa(this.PID))
+		cmd := exec.Command("kill", "-USR2", strconv.Itoa(this.PID))
 
 		err := cmd.Start()
 		if err != nil {

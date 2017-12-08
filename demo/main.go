@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"fmt"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 	ioutil.WriteFile("./demo.pid", pid, 0666)
 	go func() {
 		for {
+			fmt.Println("demo")
 			logger.Info("env: %s year: %v", myenv, time.Now().Year())
 			logger.Warn("env: %s year: %v", myenv, time.Now().Year())
 			logger.Error("env: %s year: %v", myenv, time.Now().Year())
