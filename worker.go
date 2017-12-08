@@ -185,9 +185,15 @@ func (this *service) Start() error {
 	if this.Config.LogPath != "" {
 		out := makeFile(this.Config.LogPath)
 		cmd.Stdout = out
+	} else {
+		out := makeFile(BinaryDir+"/logs/"+this.Config.Name+"/stdout.log")
+		cmd.Stdout = out
 	}
 	if this.Config.ErrPath != "" {
 		err := makeFile(this.Config.ErrPath)
+		cmd.Stderr = err
+	} else {
+		err := makeFile(BinaryDir+"/logs/"+this.Config.Name+"/stderr.log")
 		cmd.Stderr = err
 	}
 
