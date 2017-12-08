@@ -6,11 +6,12 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"fmt"
+	"log"
 )
 
 func main() {
 	quit := make(chan bool)
+	cartlog.Standard()
 	cartlog.FileSystem("./logs")
 	logger := cartlog.GetLogger()
 	myenv := os.Getenv("MY_ENV")
@@ -18,7 +19,7 @@ func main() {
 	ioutil.WriteFile("./demo.pid", pid, 0666)
 	go func() {
 		for {
-			fmt.Println("demo")
+			log.Println("demo")
 			logger.Info("env: %s year: %v", myenv, time.Now().Year())
 			logger.Warn("env: %s year: %v", myenv, time.Now().Year())
 			logger.Error("env: %s year: %v", myenv, time.Now().Year())
