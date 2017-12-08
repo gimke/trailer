@@ -6,7 +6,7 @@ command:
   - ./demo/demo
 
 pid_file: ./demo/demo.pid
-log_path: ./demo/logs/out.log
-err_path: ./demo/logs/err.log
+log_path: ./demo/logs/access.log
+err_path: ./demo/logs/debug.log
 run_at_load: true
 keep_alive: false
