@@ -50,9 +50,9 @@ func Do() {
 		if firstInit {
 			s.RunAtLoad()
 		}
-		firstInit = false
 		go s.Monitor()
 	}
+	firstInit = false
 	wg.Wait()
 	if Reload {
 		ShouldQuit = false
