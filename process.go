@@ -27,7 +27,7 @@ func (*process) Start() (string, error) {
 		if err != nil {
 			return fmt.Sprintf(format, action, failed), err
 		}
-		return fmt.Sprintf(format, action, success), nil
+		return fmt.Sprintf(format, action, success), err
 	}
 }
 
@@ -62,10 +62,26 @@ func (*process) Stop() (string, error) {
 			}
 		}()
 		<-quitStop
-		return fmt.Sprintf(format, action, success), nil
+		return fmt.Sprintf(format, action, success), err
 	}
 }
 
+func (this *process) Restart() (string, error) {
+	action := "Restarting service:"
+	s := service{Name: BinaryName}
+	if pid := s.GetPID(); pid == 0 {
+		return this.Start()
+	} else {
+		dir, _ := os.Getwd()
+		cmd := exec.Command("kill", "-USR2",strconv.Itoa(pid))
+		cmd.Dir = dir
+		err := cmd.Start()
+		if err != nil {
+			return fmt.Sprintf(format, action, failed), err
+		}
+		return fmt.Sprintf(format, action, success), err
+	}
+}
 //real work
 func (*process) Work() {
 	s := service{Name: BinaryName}
@@ -83,15 +99,23 @@ func (*process) Work() {
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2)
 
 		go func() {
-			sig := <-sigs
-			log.Println("get signal", sig)
-			ShouldQuit = true
+			for {
+				sig := <-sigs
+				log.Println("get signal", sig)
+				if sig == syscall.SIGUSR2 {
+					log.Println(sig)
+					Reload = true
+					ShouldQuit = true
+				} else {
+					Reload = false
+					ShouldQuit = true
+				}
+			}
 		}()
 		go func() {
 			log.Println("service is running")
 			Do()
 		}()
-
 		<-Quit
 		//delete pid
 		log.Println("service terminated")

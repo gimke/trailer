@@ -40,18 +40,27 @@ type config struct {
 }
 
 var wg sync.WaitGroup
-
+var firstInit = true
 func Do() {
 	ss := newServices()
 	ss.GetList()
 	for _, s := range *ss {
 		wg.Add(1)
 		//first run it
-		s.RunAtLoad()
+		if firstInit {
+			s.RunAtLoad()
+		}
+		firstInit = false
 		go s.Monitor()
 	}
 	wg.Wait()
-	Quit <- true
+	if Reload {
+		ShouldQuit = false
+		Reload = false
+		Do()
+	} else {
+		Quit <- true
+	}
 }
 
 func newServices() *services {

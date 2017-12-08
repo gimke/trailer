@@ -56,8 +56,7 @@ func main() {
 		return
 	}
 	if restartFlag {
-		p.Stop()
-		status, err := p.Start()
+		status, err := p.Restart()
 		printStatus(status, err)
 		return
 	}

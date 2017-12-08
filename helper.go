@@ -22,13 +22,13 @@ const (
 )
 
 var (
-
 	BinaryName string
 	BinaryDir  string
 	PidFile    string
 
 	ShouldQuit = false
 	Quit       = make(chan bool)
+	Reload     = false
 	format     = "%-40s%s"
 
 	// ErrAlreadyRunning appears if try to start already running service
