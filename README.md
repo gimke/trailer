@@ -62,6 +62,8 @@ command:
   - ./demo/demo
 
 pid_file: ./demo/demo.pid
+std_out_path: ./demo/logs/access.log
+std_err_path: ./demo/logs/err.log
 grace: false
 run_at_load: true
 keep_alive: false

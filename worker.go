@@ -32,11 +32,11 @@ type config struct {
 	Command []string
 	PidFile string `json:"pidFile" yaml:"pid_file"`
 
-	LogPath   string `json:"logPath" yaml:"log_path"`
-	ErrPath   string `json:"errPath" yaml:"err_path"`
-	Grace     bool   `json:"grace" yaml:"grace"`
-	RunAtLoad bool   `json:"runAtLoad" yaml:"run_at_load"`
-	KeepAlive bool   `json:"keepAlive" yaml:"keep_alive"`
+	StdOutFile string `json:"stdOutFile" yaml:"std_out_file"`
+	StdErrFile string `json:"stdErrFile" yaml:"std_err_file"`
+	Grace      bool   `json:"grace" yaml:"grace"`
+	RunAtLoad  bool   `json:"runAtLoad" yaml:"run_at_load"`
+	KeepAlive  bool   `json:"keepAlive" yaml:"keep_alive"`
 }
 
 var wg sync.WaitGroup
@@ -182,18 +182,18 @@ func (this *service) Start() error {
 	}
 	cmd.Dir = dir
 
-	if this.Config.LogPath != "" {
-		out := makeFile(this.Config.LogPath)
+	if this.Config.StdOutFile != "" {
+		out := makeFile(this.Config.StdOutFile)
 		cmd.Stdout = out
 	} else {
-		out := makeFile(BinaryDir+"/logs/"+this.Config.Name+"/stdout.log")
+		out := makeFile(BinaryDir + "/logs/" + this.Config.Name + "/stdout.log")
 		cmd.Stdout = out
 	}
-	if this.Config.ErrPath != "" {
-		err := makeFile(this.Config.ErrPath)
+	if this.Config.StdErrFile != "" {
+		err := makeFile(this.Config.StdErrFile)
 		cmd.Stderr = err
 	} else {
-		err := makeFile(BinaryDir+"/logs/"+this.Config.Name+"/stderr.log")
+		err := makeFile(BinaryDir + "/logs/" + this.Config.Name + "/stderr.log")
 		cmd.Stderr = err
 	}
 
