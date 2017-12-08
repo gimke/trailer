@@ -48,6 +48,8 @@ Usage: list | start | stop | restart | status
 {
   "name": "ping",
   "command": ["ping","192.168.1.1"],
+  "stdOutFile": "./logs/ping/stdout.log",
+  "stdErrFile": "./logs/ping/stderr.log",
   "runAtLoad": true,
   "keepAlive": false
 }
@@ -62,8 +64,8 @@ command:
   - ./demo/demo
 
 pid_file: ./demo/demo.pid
-std_out_path: ./demo/logs/access.log
-std_err_path: ./demo/logs/err.log
+std_out_file: ./demo/logs/stdout.log
+std_err_file: ./demo/logs/stderr.log
 grace: false
 run_at_load: true
 keep_alive: false
