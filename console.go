@@ -179,8 +179,11 @@ func (*console) Remove(name string) {
 		}
 		printStatus(fmt.Sprintf(format, action, failed), err)
 	} else {
+		printStatus(fmt.Sprintf(format, action, success), nil)
 		p := process{}
-
-		p.Restart()
+		if isRunning,_ := p.IsRunning();isRunning {
+			status, err := p.Restart()
+			printStatus(status, err)
+		}
 	}
 }
