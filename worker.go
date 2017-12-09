@@ -14,16 +14,14 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"net/http"
 )
 
 type services []*service
 
 type service struct {
-	Name      string
-	IsRunning bool
-	PID       int
-	Loaded    bool
-	Config    *config
+	Name   string
+	Config *config
 }
 
 type config struct {
@@ -37,10 +35,18 @@ type config struct {
 	Grace      bool   `json:"grace" yaml:"grace"`
 	RunAtLoad  bool   `json:"runAtLoad" yaml:"run_at_load"`
 	KeepAlive  bool   `json:"keepAlive" yaml:"keep_alive"`
+
+	Deployment *deployment
+}
+
+type deployment struct {
+	Header     string `json:"header" yaml:"header"`
+	ConfigPath string `json:"configPath" yaml:"config_path"`
 }
 
 var wg sync.WaitGroup
 var firstInit = true
+
 func Do() {
 	ss := newServices()
 	ss.GetList()
@@ -95,9 +101,10 @@ func fromFile(fileName string) *service {
 				}
 				if err == nil {
 					s := &service{Name: config.Name, Config: config}
-					pid := s.GetPID()
-					s.PID = pid
-					s.IsRunning = pid != 0
+
+					//y,_:= yaml.Marshal(config)
+					//log.Println(string(y))
+
 					return s
 				}
 			}
@@ -123,8 +130,13 @@ func (this *service) Monitor() {
 	for {
 		pid := this.GetPID()
 		if pid == 0 {
+			//is not running
 			this.KeepAlive()
+		} else {
+			//is running
+			this.Update()
 		}
+
 		time.Sleep(10 * time.Second)
 		if ShouldQuit {
 			wg.Done()
@@ -153,8 +165,58 @@ func (this *service) KeepAlive() {
 		}
 	} else {
 		this.DeletePID()
-		this.PID = 0
-		this.IsRunning = false
+	}
+}
+
+func (this *service) Update() {
+	if this.Config.Deployment != nil && this.Config.Deployment.ConfigPath != "" {
+		client := &http.Client{}
+		req, _ := http.NewRequest("GET", this.Config.Deployment.ConfigPath, nil)
+		kv := strings.Split(this.Config.Deployment.Header,":")
+
+		req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
+
+		res, err := client.Do(req)
+		if res != nil {
+			defer res.Body.Close()
+		}
+		if err != nil {
+			log.Printf("%s update error %v\n", this.Name, err)
+		} else {
+			data, _ := ioutil.ReadAll(res.Body)
+			if res.StatusCode == 200 {
+				//success
+				log.Println(string(data))
+			} else {
+				log.Printf("%s update error %v\n", this.Name, string(data))
+			}
+		}
+
+		//command := this.abs(this.Config.Command[0])
+		//dir := filepath.Dir(command)
+		//cmd := exec.Command("curl", "-s", "-H", this.Config.Deployment.Header, this.Config.Deployment.ConfigPath)
+		//cmd.Dir = dir
+		//
+		//var outb bytes.Buffer
+		//cmd.Stdout = &outb
+		//cmd.Stderr = &outb
+		//
+		//err := cmd.Start()
+		//
+		//if err != nil {
+		//	log.Printf("%s update error %v\n", this.Name, err)
+		//} else {
+		//	cmd.Wait()
+		//	//configString := outb.String()
+		//	//check if is yaml file
+		//	temp:= &config{}
+		//	err := yaml.Unmarshal(outb.Bytes(),temp)
+		//	if err != nil {
+		//		log.Printf("%s update error %v\n", this.Name, err)
+		//	} else {
+		//		log.Printf(outb.String())
+		//	}
+		//}
 	}
 }
 
@@ -214,18 +276,15 @@ func (this *service) Start() error {
 			cmd.Wait()
 		}()
 		this.SetPID(cmd.Process.Pid)
-		this.PID = cmd.Process.Pid
-		this.IsRunning = true
 	}
 	return nil
 }
 
 func (this *service) Stop() error {
-	cmd := exec.Command("kill", strconv.Itoa(this.PID))
+	_, pid := this.IsRunning()
+	cmd := exec.Command("kill", strconv.Itoa(pid))
 
 	this.DeletePID()
-	this.PID = 0
-	this.IsRunning = false
 
 	err := cmd.Start()
 	if err != nil {
@@ -241,7 +300,9 @@ func (this *service) Stop() error {
 
 func (this *service) Restart() error {
 	if this.Config.Grace {
-		cmd := exec.Command("kill", "-USR2", strconv.Itoa(this.PID))
+		_, pid := this.IsRunning()
+
+		cmd := exec.Command("kill", "-USR2", strconv.Itoa(pid))
 
 		err := cmd.Start()
 		if err != nil {
@@ -264,6 +325,14 @@ func (this *service) Restart() error {
 		}
 	}
 	return nil
+}
+
+func (this *service) IsRunning() (bool, int) {
+	if pid := this.GetPID(); pid == 0 {
+		return false, 0
+	} else {
+		return true, pid
+	}
 }
 
 func (this *service) GetPIDPath() string {

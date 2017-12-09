@@ -77,13 +77,14 @@ func (this *console) Exec(commands []string) {
 				keepAlive = "Y"
 				keepAliveColor = green
 			}
-			pid := strconv.Itoa(s.PID)
-			if !s.IsRunning {
+			isRunning,pid := s.IsRunning()
+			pidString := strconv.Itoa(pid)
+			if !isRunning {
 				running = "STOPPED"
 				color = red
-				pid = "-"
+				pidString = "-"
 			}
-			fmt.Printf("%-4s %-6s %-20s %s%-10s%s %s%-10s%s %s%-10s%s\n", strconv.Itoa(index+1), pid, s.Name,
+			fmt.Printf("%-4s %-6s %-20s %s%-10s%s %s%-10s%s %s%-10s%s\n", strconv.Itoa(index+1), pidString, s.Name,
 				color, running, reset,
 				runAtLoadColor, runAtLoad, reset,
 				keepAliveColor, keepAlive, reset)
