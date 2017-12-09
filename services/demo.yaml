@@ -10,7 +10,7 @@ run_at_load: true
 keep_alive: false
 
 deployment: &deployment
-#  header: 'Authorization: token 9023e0d3c6a6d17ba3a35364b895dd978c10fab9'
+#  header: 'Authorization: token 8bfd421354ac947c5057e592ba5f14b179849464'
 #  config_path: https://raw.githubusercontent.com/gimke/cartdemo/master/trailer.yaml
   header: 'PRIVATE-TOKEN: X4M_VayFXq_RaAmQjVhY'
   config_path: https://gitlab.com/gimke/portalbuild/raw/master/version
