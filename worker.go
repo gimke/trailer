@@ -172,10 +172,10 @@ func (this *service) Update() {
 	if this.Config.Deployment != nil && this.Config.Deployment.ConfigPath != "" {
 		client := &http.Client{}
 		req, _ := http.NewRequest("GET", this.Config.Deployment.ConfigPath, nil)
-		kv := strings.Split(this.Config.Deployment.Header,":")
-
-		req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
-
+		if this.Config.Deployment.Header != "" {
+			kv := strings.Split(this.Config.Deployment.Header,":")
+			req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
+		}
 		res, err := client.Do(req)
 		if res != nil {
 			defer res.Body.Close()
