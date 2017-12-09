@@ -13,11 +13,12 @@ const (
 	red   = "\033[31m"
 	green = "\033[32m"
 
-	startUsage        = "Start service"
-	stopUsage         = "Stop service"
-	restartUsage      = "Restart service"
-	versionUsage      = "Display version"
-	consoleUsage      = "Console"
+	startUsage   = "Start service"
+	stopUsage    = "Stop service"
+	restartUsage = "Restart service"
+	versionUsage = "Display version"
+	consoleUsage = "Console"
+	daemonUsage  = "Daemon service Please run -s start daemon"
 )
 
 var (

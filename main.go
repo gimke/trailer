@@ -9,11 +9,11 @@ import (
 func main() {
 
 	var (
-		startFlag        bool
-		stopFlag         bool
-		restartFlag      bool
-		versionFlag      bool
-		consoleFlag      bool
+		startFlag   bool
+		stopFlag    bool
+		restartFlag bool
+		versionFlag bool
+		daemonFlag  bool
 	)
 
 	flag.BoolVar(&startFlag, "start", false, startUsage)
@@ -28,8 +28,7 @@ func main() {
 	flag.BoolVar(&versionFlag, "version", false, versionUsage)
 	flag.BoolVar(&versionFlag, "v", false, versionUsage)
 
-	flag.BoolVar(&consoleFlag, "console", false, consoleUsage)
-	flag.BoolVar(&consoleFlag, "c", false, consoleUsage)
+	flag.BoolVar(&daemonFlag, "daemon", false, daemonUsage)
 
 	flag.Parse()
 	//get bin path
@@ -57,10 +56,10 @@ func main() {
 		printStatus(status, err)
 		return
 	}
-	if consoleFlag {
-		c := console{}
-		c.Exec(flag.Args())
+	if daemonFlag {
+		p.Work()
 		return
 	}
-	p.Work()
+	c := console{}
+	c.Exec(flag.Args())
 }

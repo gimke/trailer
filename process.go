@@ -21,7 +21,7 @@ func (*process) Start() (string, error) {
 	if pid := s.GetPID(); pid != 0 {
 		return fmt.Sprintf(format, action, failed), ErrAlreadyRunning
 	} else {
-		cmd := exec.Command(BinaryDir + "/" + BinaryName)
+		cmd := exec.Command(BinaryDir + "/" + BinaryName,"-daemon")
 		cmd.Dir = BinaryDir
 		err := cmd.Start()
 		if err != nil {
