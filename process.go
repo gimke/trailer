@@ -13,15 +13,14 @@ import (
 	"time"
 )
 
-type process struct {}
+type process struct{}
 
-func (*process) Start() (string, error) {
+func (this *process) Start() (string, error) {
 	action := "Starting service:"
-	s := service{Name: BinaryName}
-	if pid := s.GetPID(); pid != 0 {
+	if isRunning, _ := this.IsRunning(); isRunning {
 		return fmt.Sprintf(format, action, failed), ErrAlreadyRunning
 	} else {
-		cmd := exec.Command(BinaryDir + "/" + BinaryName,"-daemon")
+		cmd := exec.Command(BinaryDir+"/"+BinaryName, "-daemon")
 		cmd.Dir = BinaryDir
 		err := cmd.Start()
 		if err != nil {
@@ -31,10 +30,9 @@ func (*process) Start() (string, error) {
 	}
 }
 
-func (*process) Stop() (string, error) {
+func (this *process) Stop() (string, error) {
 	action := "Stopping service:"
-	s := service{Name: BinaryName}
-	if pid := s.GetPID(); pid == 0 {
+	if isRunning, pid := this.IsRunning(); !isRunning {
 		return fmt.Sprintf(format, action, failed), ErrAlreadyStopped
 	} else {
 		quitStop := make(chan bool)
@@ -49,7 +47,7 @@ func (*process) Stop() (string, error) {
 		go func() {
 			i := 0
 			for {
-				if pid := s.GetPID(); pid == 0 {
+				if isRunning, _ := this.IsRunning(); !isRunning {
 					quitStop <- true
 					break
 				}
@@ -68,12 +66,11 @@ func (*process) Stop() (string, error) {
 
 func (this *process) Restart() (string, error) {
 	action := "Restarting service:"
-	s := service{Name: BinaryName}
-	if pid := s.GetPID(); pid == 0 {
+	if isRunning, pid := this.IsRunning(); !isRunning {
 		return this.Start()
 	} else {
 		dir, _ := os.Getwd()
-		cmd := exec.Command("kill", "-USR2",strconv.Itoa(pid))
+		cmd := exec.Command("kill", "-USR2", strconv.Itoa(pid))
 		cmd.Dir = dir
 		err := cmd.Start()
 		if err != nil {
@@ -82,6 +79,16 @@ func (this *process) Restart() (string, error) {
 		return fmt.Sprintf(format, action, success), err
 	}
 }
+
+func (this *process) IsRunning() (bool, int) {
+	s := service{Name: BinaryName}
+	if pid := s.GetPID(); pid == 0 {
+		return false, 0
+	} else {
+		return true, pid
+	}
+}
+
 //real work
 func (*process) Work() {
 	s := service{Name: BinaryName}
@@ -89,7 +96,7 @@ func (*process) Work() {
 		fmt.Fprintln(os.Stderr, "\033[31m"+ErrAlreadyRunning.Error()+"\033[0m")
 		os.Exit(1)
 	} else {
-		cartlog.FileSystem("./logs/"+BinaryName)
+		cartlog.FileSystem("./logs/" + BinaryName)
 		pid := []byte(strconv.Itoa(os.Getpid()))
 		if _, err := os.Stat(BinaryDir + "/run"); os.IsNotExist(err) {
 			os.Mkdir(BinaryDir+"/run", os.ModePerm)

@@ -2,10 +2,25 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 )
 
+func usage() {
+	fmt.Fprintf(os.Stdout, `Usage of trailer:
+  -s,-start         Start service
+  -q,-stop          Stop service
+  -r,-restart       Restart service
+  -v,-version       Display version
+
+Usage of trailer commons:
+  list              List all service
+  start             Start a service
+  stop              Stop a service
+  restart           Restart a service
+`)
+}
 func main() {
 
 	var (
@@ -15,6 +30,8 @@ func main() {
 		versionFlag bool
 		daemonFlag  bool
 	)
+
+	flag.Usage = usage
 
 	flag.BoolVar(&startFlag, "start", false, startUsage)
 	flag.BoolVar(&startFlag, "s", false, startUsage)

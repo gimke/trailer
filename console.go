@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 )
-type console struct {}
+
+type console struct{}
 
 func (this *console) Exec(commands []string) {
 	usage := "Usage: list | start | stop | restart | status"
@@ -87,6 +89,13 @@ func (this *console) Exec(commands []string) {
 				keepAliveColor, keepAlive, reset)
 		}
 		break
+	case "add":
+		break
+	case "remove":
+		//remove from list
+		this.Remove(commands[1])
+		//restart service
+		break
 	default:
 		fmt.Println(usage)
 		break
@@ -153,5 +162,25 @@ func (*console) Restart(name string) {
 				printStatus(fmt.Sprintf(format, action, success), err)
 			}
 		}
+	}
+}
+
+func (*console) Remove(name string) {
+	action := "Remove service " + name + ":"
+	errYaml := os.Remove(BinaryDir + "/services/" + name + ".yaml")
+	errJson := os.Remove(BinaryDir + "/services/" + name + ".json")
+
+	if errYaml != nil && errJson != nil {
+		var err error
+		if errYaml != nil {
+			err = errYaml
+		} else {
+			err = errJson
+		}
+		printStatus(fmt.Sprintf(format, action, failed), err)
+	} else {
+		p := process{}
+
+		p.Restart()
 	}
 }
