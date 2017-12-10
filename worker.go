@@ -45,6 +45,8 @@ type deployment struct {
 	ConfigHeaders []string `json:"configHeaders" yaml:"config_headers"`
 	ConfigPath    string   `json:"configPath" yaml:"config_path"`
 	Version       string   `json:"version" yaml:"version"`
+	Zip           string   `json:"zip" yaml:"zip"`
+	Tar           string   `json:"tar" yaml:"tar"`
 }
 
 var wg sync.WaitGroup
@@ -145,7 +147,13 @@ func (this *service) Monitor() {
 			this.Update()
 		}
 
-		time.Sleep(60 * time.Second)
+		for i:=0;i < 5;i++{
+			if ShouldQuit {
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+
 		if ShouldQuit {
 			wg.Done()
 			break
@@ -185,17 +193,40 @@ func (this *service) Update() {
 			remoteConfig := &config{}
 			switch this.EXT {
 			case ".json":
-				err = json.Unmarshal([]byte(content),&remoteConfig)
+				err = json.Unmarshal([]byte(content), &remoteConfig)
 				break
 			case ".yaml":
-				err = yaml.Unmarshal([]byte(content),&remoteConfig)
+				err = yaml.Unmarshal([]byte(content), &remoteConfig)
 				break
 			}
 			if err == nil {
 				//check version
-				if remoteConfig.Deployment.Version != this.Config.Deployment.Version {
+				remoteVersion :=remoteConfig.Deployment.Version
+				if remoteVersion != this.Config.Deployment.Version {
 					//update
 					log.Printf("%s begin update\n", this.Name)
+					dir,_ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
+					if !this.IsExist() {
+						if err := os.MkdirAll(dir,os.ModePerm); err != nil {
+							log.Printf("%s update error %v\n", this.Name,err)
+						}
+					}
+
+					if remoteConfig.Deployment.Zip != "" {
+							//download zip
+							file := dir+"/zip/"+remoteVersion+".zip"
+						url := strings.Replace(remoteConfig.Deployment.Zip,"{{version}}",remoteVersion,-1)
+						println(url)
+						if _, err := os.Stat(file); os.IsNotExist(err) {
+							downloadFile(file,url)
+							unzip(file,dir)
+						}
+					} else if remoteConfig.Deployment.Tar != "" {
+						//download tar
+					} else {
+						log.Printf("%s zip or tar file not founded\n", this.Name)
+					}
+
 				}
 			} else {
 				println(err.Error())
@@ -242,15 +273,6 @@ func (this *service) abs(filePath string) string {
 		}
 	}
 	return command
-}
-
-func makeFile(path string) *os.File {
-	dir := filepath.Dir(path)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		os.MkdirAll(dir, os.ModePerm)
-	}
-	file, _ := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	return file
 }
 
 func (this *service) Start() error {
