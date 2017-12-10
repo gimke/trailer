@@ -230,6 +230,8 @@ func makeFile(path string) *os.File {
 
 func (this *service) Start() error {
 	command := this.abs(this.Config.Command[0])
+	println(command)
+
 	dir := filepath.Dir(command)
 
 	cmd := exec.Command(command, this.Config.Command[1:]...)
