@@ -83,6 +83,9 @@ func (this *console) Exec(commands []string) {
 				running = "STOPPED"
 				color = red
 				pidString = "-"
+				if !s.IsExist() {
+					running = "NOTEXIST"
+				}
 			}
 			fmt.Printf("%-4s %-6s %-20s %s%-10s%s %s%-10s%s %s%-10s%s\n", strconv.Itoa(index+1), pidString, s.Name,
 				color, running, reset,

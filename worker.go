@@ -22,6 +22,7 @@ type services []*service
 
 type service struct {
 	Name   string
+	EXT    string
 	Config *config
 }
 
@@ -43,6 +44,7 @@ type config struct {
 type deployment struct {
 	ConfigHeaders []string `json:"configHeaders" yaml:"config_headers"`
 	ConfigPath    string   `json:"configPath" yaml:"config_path"`
+	Version       string   `json:"version" yaml:"version"`
 }
 
 var wg sync.WaitGroup
@@ -101,8 +103,9 @@ func fromFile(fileName string) *service {
 					break
 				}
 				if err == nil {
-					s := &service{Name: config.Name, Config: config}
 
+					s := &service{Name: config.Name, Config: config}
+					s.EXT = ext
 					//y,_:= yaml.Marshal(config)
 					//log.Println(string(y))
 
@@ -133,12 +136,16 @@ func (this *service) Monitor() {
 		if pid == 0 {
 			//is not running
 			this.KeepAlive()
+			if !this.IsExist() {
+				//try to update
+				this.Update()
+			}
 		} else {
 			//is running
 			this.Update()
 		}
 
-		time.Sleep(10 * time.Second)
+		time.Sleep(60 * time.Second)
 		if ShouldQuit {
 			wg.Done()
 			break
@@ -172,10 +179,27 @@ func (this *service) KeepAlive() {
 func (this *service) Update() {
 	//get config file
 	if this.Config.Deployment != nil && this.Config.Deployment.ConfigPath != "" {
-		_, err := this.getRemoteConfig()
+		content, err := this.getRemoteConfig()
 		if err == nil {
-
-			//slog.Println(config)
+			//check version
+			remoteConfig := &config{}
+			switch this.EXT {
+			case ".json":
+				err = json.Unmarshal([]byte(content),&remoteConfig)
+				break
+			case ".yaml":
+				err = yaml.Unmarshal([]byte(content),&remoteConfig)
+				break
+			}
+			if err == nil {
+				//check version
+				if remoteConfig.Deployment.Version != this.Config.Deployment.Version {
+					//update
+					log.Printf("%s begin update\n", this.Name)
+				}
+			} else {
+				println(err.Error())
+			}
 		}
 	}
 }
@@ -318,6 +342,14 @@ func (this *service) IsRunning() (bool, int) {
 	} else {
 		return true, pid
 	}
+}
+
+func (this *service) IsExist() bool {
+	command := this.abs(this.Config.Command[0])
+	if _, err := os.Stat(command); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
 
 func (this *service) GetPIDPath() string {
