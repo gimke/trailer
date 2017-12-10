@@ -5,6 +5,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -14,7 +15,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"net/http"
+	"errors"
 )
 
 type services []*service
@@ -40,8 +41,8 @@ type config struct {
 }
 
 type deployment struct {
-	Header     string `json:"header" yaml:"header"`
-	ConfigPath string `json:"configPath" yaml:"config_path"`
+	ConfigHeaders    []string `json:"configHeaders" yaml:"config_headers"`
+	ConfigPath string   `json:"configPath" yaml:"config_path"`
 }
 
 var wg sync.WaitGroup
@@ -169,54 +170,37 @@ func (this *service) KeepAlive() {
 }
 
 func (this *service) Update() {
+	//get config file
 	if this.Config.Deployment != nil && this.Config.Deployment.ConfigPath != "" {
-		client := &http.Client{}
-		req, _ := http.NewRequest("GET", this.Config.Deployment.ConfigPath, nil)
-		if this.Config.Deployment.Header != "" {
-			kv := strings.Split(this.Config.Deployment.Header,":")
-			req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
+		config,err := this.getConfigFile()
+		if err == nil {
+			log.Println(config)
 		}
-		res, err := client.Do(req)
-		if res != nil {
-			defer res.Body.Close()
-		}
-		if err != nil {
-			log.Printf("%s update error %v\n", this.Name, err)
+	}
+}
+func (this *service) getConfigFile() (string, error) {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", this.Config.Deployment.ConfigPath, nil)
+	for _, header:= range this.Config.Deployment.ConfigHeaders {
+		kv := strings.Split(header, ":")
+		req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
+	}
+	res, err := client.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
+	if err != nil {
+		log.Printf("%s update error %v\n", this.Name, err)
+		return "", err
+	} else {
+		data, _ := ioutil.ReadAll(res.Body)
+		if res.StatusCode == 200 {
+			//success
+			return string(data),nil
 		} else {
-			data, _ := ioutil.ReadAll(res.Body)
-			if res.StatusCode == 200 {
-				//success
-				log.Println(string(data))
-			} else {
-				log.Printf("%s update error %v\n", this.Name, string(data))
-			}
+			log.Printf("%s update error %v\n", this.Name, string(data))
+			return "", errors.New(string(data))
 		}
-
-		//command := this.abs(this.Config.Command[0])
-		//dir := filepath.Dir(command)
-		//cmd := exec.Command("curl", "-s", "-H", this.Config.Deployment.Header, this.Config.Deployment.ConfigPath)
-		//cmd.Dir = dir
-		//
-		//var outb bytes.Buffer
-		//cmd.Stdout = &outb
-		//cmd.Stderr = &outb
-		//
-		//err := cmd.Start()
-		//
-		//if err != nil {
-		//	log.Printf("%s update error %v\n", this.Name, err)
-		//} else {
-		//	cmd.Wait()
-		//	//configString := outb.String()
-		//	//check if is yaml file
-		//	temp:= &config{}
-		//	err := yaml.Unmarshal(outb.Bytes(),temp)
-		//	if err != nil {
-		//		log.Printf("%s update error %v\n", this.Name, err)
-		//	} else {
-		//		log.Printf(outb.String())
-		//	}
-		//}
 	}
 }
 
@@ -234,6 +218,7 @@ func (this *service) abs(filePath string) string {
 	}
 	return command
 }
+
 func makeFile(path string) *os.File {
 	dir := filepath.Dir(path)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
