@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -15,7 +16,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"errors"
 )
 
 type services []*service
@@ -41,8 +41,8 @@ type config struct {
 }
 
 type deployment struct {
-	ConfigHeaders    []string `json:"configHeaders" yaml:"config_headers"`
-	ConfigPath string   `json:"configPath" yaml:"config_path"`
+	ConfigHeaders []string `json:"configHeaders" yaml:"config_headers"`
+	ConfigPath    string   `json:"configPath" yaml:"config_path"`
 }
 
 var wg sync.WaitGroup
@@ -172,16 +172,17 @@ func (this *service) KeepAlive() {
 func (this *service) Update() {
 	//get config file
 	if this.Config.Deployment != nil && this.Config.Deployment.ConfigPath != "" {
-		config,err := this.getConfigFile()
+		_, err := this.getRemoteConfig()
 		if err == nil {
-			log.Println(config)
+
+			//slog.Println(config)
 		}
 	}
 }
-func (this *service) getConfigFile() (string, error) {
+func (this *service) getRemoteConfig() (string, error) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", this.Config.Deployment.ConfigPath, nil)
-	for _, header:= range this.Config.Deployment.ConfigHeaders {
+	for _, header := range this.Config.Deployment.ConfigHeaders {
 		kv := strings.Split(header, ":")
 		req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
 	}
@@ -196,7 +197,7 @@ func (this *service) getConfigFile() (string, error) {
 		data, _ := ioutil.ReadAll(res.Body)
 		if res.StatusCode == 200 {
 			//success
-			return string(data),nil
+			return string(data), nil
 		} else {
 			log.Printf("%s update error %v\n", this.Name, string(data))
 			return "", errors.New(string(data))
@@ -230,8 +231,6 @@ func makeFile(path string) *os.File {
 
 func (this *service) Start() error {
 	command := this.abs(this.Config.Command[0])
-	println(command)
-
 	dir := filepath.Dir(command)
 
 	cmd := exec.Command(command, this.Config.Command[1:]...)
@@ -280,7 +279,6 @@ func (this *service) Stop() error {
 		go func() {
 			cmd.Wait()
 		}()
-
 	}
 	return nil
 }
