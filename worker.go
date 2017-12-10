@@ -216,18 +216,16 @@ func (this *service) Update() {
 						//download zip
 						file := dir + "/zip/" + remoteVersion + ".zip"
 						url := strings.Replace(remoteConfig.Deployment.Zip, "{{version}}", remoteVersion, -1)
-						if _, err := os.Stat(file); os.IsNotExist(err) {
-							err := downloadFile(file, url)
+						err := downloadFile(file, url)
+						if err != nil {
+							log.Printf("%s update error %v\n", this.Name, err)
+						} else {
+							err := unzip(file, dir)
 							if err != nil {
 								log.Printf("%s update error %v\n", this.Name, err)
 							} else {
-								err := unzip(file, dir)
-								if err != nil {
-									log.Printf("%s update error %v\n", this.Name, err)
-								} else {
-									//restart service
-									this.Restart()
-								}
+								//restart service
+								this.Restart()
 							}
 						}
 					} else if remoteConfig.Deployment.Tar != "" {
