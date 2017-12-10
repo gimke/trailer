@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"archive/zip"
 	"strings"
+	"io/ioutil"
 )
 
 const (
@@ -140,16 +141,22 @@ func downloadFile(file string, url string) (err error) {
 
 	// Get the data
 	resp, err := http.Get(url)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
-	// Writer the body to file
-	_, err = io.Copy(out, resp.Body)
-	if err != nil  {
-		return err
+	if resp.StatusCode == 200 {
+		// Writer the body to file
+		_, err = io.Copy(out, resp.Body)
+		if err != nil  {
+			return err
+		}
+	} else {
+		data, _ := ioutil.ReadAll(resp.Body)
+		return errors.New(string(data))
 	}
-
 	return nil
 }

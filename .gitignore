@@ -5,6 +5,7 @@ services/*
 !services/demo.yaml
 !services/ping.json
 demo/
+home/
 vendor/*
 !vendor/vendor.json
 pid

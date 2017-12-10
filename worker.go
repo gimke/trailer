@@ -147,7 +147,7 @@ func (this *service) Monitor() {
 			this.Update()
 		}
 
-		for i:=0;i < 5;i++{
+		for i := 0; i < 5; i++ {
 			if ShouldQuit {
 				break
 			}
@@ -201,25 +201,34 @@ func (this *service) Update() {
 			}
 			if err == nil {
 				//check version
-				remoteVersion :=remoteConfig.Deployment.Version
+				remoteVersion := remoteConfig.Deployment.Version
 				if remoteVersion != this.Config.Deployment.Version {
 					//update
 					log.Printf("%s begin update\n", this.Name)
-					dir,_ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
+					dir, _ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
 					if !this.IsExist() {
-						if err := os.MkdirAll(dir,os.ModePerm); err != nil {
-							log.Printf("%s update error %v\n", this.Name,err)
+						if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+							log.Printf("%s update error %v\n", this.Name, err)
 						}
 					}
 
 					if remoteConfig.Deployment.Zip != "" {
-							//download zip
-							file := dir+"/zip/"+remoteVersion+".zip"
-						url := strings.Replace(remoteConfig.Deployment.Zip,"{{version}}",remoteVersion,-1)
-						println(url)
+						//download zip
+						file := dir + "/zip/" + remoteVersion + ".zip"
+						url := strings.Replace(remoteConfig.Deployment.Zip, "{{version}}", remoteVersion, -1)
 						if _, err := os.Stat(file); os.IsNotExist(err) {
-							downloadFile(file,url)
-							unzip(file,dir)
+							err := downloadFile(file, url)
+							if err != nil {
+								log.Printf("%s update error %v\n", this.Name, err)
+							} else {
+								err := unzip(file, dir)
+								if err != nil {
+									log.Printf("%s update error %v\n", this.Name, err)
+								} else {
+									//restart service
+									this.Restart()
+								}
+							}
 						}
 					} else if remoteConfig.Deployment.Tar != "" {
 						//download tar
@@ -229,8 +238,10 @@ func (this *service) Update() {
 
 				}
 			} else {
-				println(err.Error())
+				log.Printf("%s update error %v\n", this.Name, err)
 			}
+		} else {
+			log.Printf("%s update error %v\n", this.Name, err)
 		}
 	}
 }
@@ -241,16 +252,16 @@ func (this *service) getRemoteConfig() (string, error) {
 		kv := strings.Split(header, ":")
 		req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
 	}
-	res, err := client.Do(req)
-	if res != nil {
-		defer res.Body.Close()
+	resp, err := client.Do(req)
+	if resp != nil {
+		defer resp.Body.Close()
 	}
 	if err != nil {
 		log.Printf("%s update error %v\n", this.Name, err)
 		return "", err
 	} else {
-		data, _ := ioutil.ReadAll(res.Body)
-		if res.StatusCode == 200 {
+		data, _ := ioutil.ReadAll(resp.Body)
+		if resp.StatusCode == 200 {
 			//success
 			return string(data), nil
 		} else {
