@@ -195,10 +195,9 @@ func untar(src, dest string) error {
 	return nil
 }
 
-
 func makeFile(path string) *os.File {
 	dir := filepath.Dir(path)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
+	if !isExist(dir) {
 		os.MkdirAll(dir, os.ModePerm)
 	}
 	file, _ := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -206,14 +205,11 @@ func makeFile(path string) *os.File {
 }
 
 func downloadFile(file string, url string) (err error) {
-
 	// Create the file
-	out := makeFile(file)
-	if err != nil  {
-		return err
+	dir := filepath.Dir(file)
+	if !isExist(dir) {
+		os.MkdirAll(dir, os.ModePerm)
 	}
-	defer out.Close()
-
 	// Get the data
 	resp, err := http.Get(url)
 	if resp != nil {
@@ -225,8 +221,14 @@ func downloadFile(file string, url string) (err error) {
 
 	if resp.StatusCode == 200 {
 		// Writer the body to file
+		out, err := os.Create(file)
+		if err != nil  {
+			return err
+		}
+		defer out.Close()
 		_, err = io.Copy(out, resp.Body)
 		if err != nil  {
+			os.Remove(file)
 			return err
 		}
 	} else {
