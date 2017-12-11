@@ -143,11 +143,11 @@ func (this *service) Monitor() {
 			this.KeepAlive()
 			if !this.IsExist() {
 				//try to update
-				this = this.Update()
+				this.Update()
 			}
 		} else {
 			//is running
-			this = this.Update()
+			this.Update()
 		}
 		end := time.Now()
 		latency := end.Sub(start)
@@ -192,7 +192,7 @@ func (this *service) KeepAlive() {
 func (this *service) Update() *service {
 	//get config file
 	if this.Config.Deployment != nil && this.Config.Deployment.ConfigPath != "" {
-		fmt.Println("update",this.Config.Deployment)
+		fmt.Println("update",this)
 		content, err := this.getRemoteConfig()
 		if err == nil {
 			//check version
@@ -273,7 +273,7 @@ func (this *service) updateService(content string) *service {
 		//check if command changes
 		rude := false
 		tobeupdate := fromFile(this.Name + this.EXT)
-		fmt.Println("tobeupdate",tobeupdate.Config.Deployment)
+		fmt.Println("tobeupdate",tobeupdate)
 
 		if strings.Join(tobeupdate.Config.Env, "") == strings.Join(this.Config.Env, "") &&
 			strings.Join(tobeupdate.Config.Command, "") == strings.Join(this.Config.Command, "") {
@@ -285,7 +285,7 @@ func (this *service) updateService(content string) *service {
 		}
 		log.Printf("%s update success to version:%v\n", this.Name, this.Config.Deployment.Version)
 		this.Restart(rude)
-		fmt.Println("updated",this.Config.Deployment)
+		fmt.Println("updated",this)
 		return this
 	}
 }
