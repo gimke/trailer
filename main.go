@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 )
-
+//todo 晚上整理梳理代码
 func usage() {
 	fmt.Fprintf(os.Stdout, `Usage of trailer:
   -s,-start         Start service
