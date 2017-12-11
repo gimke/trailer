@@ -389,30 +389,34 @@ func (this *service) Stop() error {
 }
 
 func (this *service) Restart(rude ...bool) error {
-	r := len(rude)>0 && rude[0]
-	if this.Config.Grace && !r {
-		_, pid := this.IsRunning()
+	if isRunning, pid := this.IsRunning(); isRunning {
+		r := len(rude)>0 && rude[0]
+		if this.Config.Grace && !r {
+			cmd := exec.Command("kill", "-USR2", strconv.Itoa(pid))
 
-		cmd := exec.Command("kill", "-USR2", strconv.Itoa(pid))
-
-		err := cmd.Start()
-		if err != nil {
-			return err
-		} else {
-			go func() {
-				cmd.Wait()
-			}()
-		}
-		return nil
-	} else {
-		err := this.Stop()
-		if err != nil {
-			return err
-		} else {
-			err = this.Start()
+			err := cmd.Start()
 			if err != nil {
 				return err
+			} else {
+				go func() {
+					cmd.Wait()
+				}()
 			}
+		} else {
+			err := this.Stop()
+			if err != nil {
+				return err
+			} else {
+				err = this.Start()
+				if err != nil {
+					return err
+				}
+			}
+		}
+	} else {
+		err := this.Start()
+		if err != nil {
+			return err
 		}
 	}
 	return nil

@@ -150,22 +150,7 @@ func (*console) Restart(name string) {
 	if s == nil {
 		printStatus(fmt.Sprintf(format, action, failed), ErrFile)
 	} else {
-		pid := s.GetPID()
-		if pid == 0 {
-			err := s.Start()
-			if err != nil {
-				printStatus(fmt.Sprintf(format, action, failed), err)
-			} else {
-				printStatus(fmt.Sprintf(format, action, success), err)
-			}
-		} else {
-			err := s.Restart()
-			if err != nil {
-				printStatus(fmt.Sprintf(format, action, failed), err)
-			} else {
-				printStatus(fmt.Sprintf(format, action, success), err)
-			}
-		}
+		s.Restart()
 	}
 }
 
