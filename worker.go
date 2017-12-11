@@ -228,8 +228,7 @@ func (this *service) Update() {
 							if err != nil {
 								log.Printf("%s update unzip file error %v\n", this.Name, err)
 							} else {
-								//restart service
-								this.Restart()
+								this.updateFinish(remoteVersion)
 							}
 						}
 					} else if remoteConfig.Deployment.Tar != "" {
@@ -244,8 +243,7 @@ func (this *service) Update() {
 							if err != nil {
 								log.Printf("%s update untar file error %v\n", this.Name, err)
 							} else {
-								//restart service
-								this.Restart()
+								this.updateFinish(remoteVersion)
 							}
 						}
 					} else {
@@ -261,6 +259,17 @@ func (this *service) Update() {
 		}
 	}
 }
+
+func (this *service) updateFinish(remoteVersion string) {
+	//update version
+	this.Config.Deployment.Version = remoteVersion
+
+	//change config
+
+	//restart service
+	this.Restart()
+}
+
 func (this *service) getRemoteConfig() (string, error) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", this.Config.Deployment.ConfigPath, nil)
