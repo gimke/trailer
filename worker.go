@@ -267,7 +267,7 @@ func (this *service) updateService(content string) error{
 	if err != nil {
 		return err
 	} else {
-		this = fromFile(path)
+		this = fromFile(this.Name+this.EXT)
 		this.Restart()
 		return nil
 	}
