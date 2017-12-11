@@ -204,14 +204,20 @@ func makeFile(path string) *os.File {
 	return file
 }
 
-func downloadFile(file string, url string) (err error) {
+func downloadFile(file string, url string, headers []string) (err error) {
 	// Create the file
 	dir := filepath.Dir(file)
 	if !isExist(dir) {
 		os.MkdirAll(dir, os.ModePerm)
 	}
 	// Get the data
-	resp, err := http.Get(url)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", url, nil)
+	for _, header := range headers {
+		kv := strings.Split(header, ":")
+		req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
+	}
+	resp, err := client.Do(req)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

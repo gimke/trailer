@@ -45,6 +45,7 @@ type deployment struct {
 	ConfigHeaders []string `json:"configHeaders" yaml:"config_headers"`
 	ConfigPath    string   `json:"configPath" yaml:"config_path"`
 	Version       string   `json:"version" yaml:"version"`
+	DownloadHeaders []string `json:"downloadHeaders" yaml:"download_headers"`
 	Zip           string   `json:"zip" yaml:"zip"`
 	Tar           string   `json:"tar" yaml:"tar"`
 }
@@ -134,6 +135,7 @@ func (this *services) GetList() {
 
 func (this *service) Monitor() {
 	for {
+		start := time.Now()
 		pid := this.GetPID()
 		if pid == 0 {
 			//is not running
@@ -146,12 +148,14 @@ func (this *service) Monitor() {
 			//is running
 			this.Update()
 		}
-
-		for i := 0; i < 5; i++ {
+		end := time.Now()
+		latency := end.Sub(start)
+		log.Printf("%s latency time %v\n",this.Name, latency)
+		for i := 0; i < 60; i++ {
 			if ShouldQuit {
 				break
 			}
-			time.Sleep(5 * time.Second)
+			time.Sleep(time.Second)
 		}
 
 		if ShouldQuit {
@@ -208,7 +212,7 @@ func (this *service) Update() {
 					dir, _ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
 					if !this.IsExist() {
 						if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-							log.Printf("%s update error %v\n", this.Name, err)
+							log.Printf("%s update create dir error %v\n", this.Name, err)
 						}
 					}
 
@@ -216,13 +220,13 @@ func (this *service) Update() {
 						//download zip
 						file := dir + "/zip/" + remoteVersion + ".zip"
 						url := strings.Replace(remoteConfig.Deployment.Zip, "{{version}}", remoteVersion, -1)
-						err := downloadFile(file, url)
+						err := downloadFile(file, url, this.Config.Deployment.DownloadHeaders)
 						if err != nil {
-							log.Printf("%s update error %v\n", this.Name, err)
+							log.Printf("%s update download error %v\n", this.Name, err)
 						} else {
 							err := unzip(file, dir)
 							if err != nil {
-								log.Printf("%s update error %v\n", this.Name, err)
+								log.Printf("%s update unzip file error %v\n", this.Name, err)
 							} else {
 								//restart service
 								this.Restart()
@@ -232,13 +236,13 @@ func (this *service) Update() {
 						//download tar
 						file := dir + "/tar/" + remoteVersion + ".tar.gz"
 						url := strings.Replace(remoteConfig.Deployment.Tar, "{{version}}", remoteVersion, -1)
-						err := downloadFile(file, url)
+						err := downloadFile(file, url, this.Config.Deployment.DownloadHeaders)
 						if err != nil {
-							log.Printf("%s update error %v\n", this.Name, err)
+							log.Printf("%s update download error %v\n", this.Name, err)
 						} else {
 							err := untar(file, dir)
 							if err != nil {
-								log.Printf("%s update error %v\n", this.Name, err)
+								log.Printf("%s update untar file error %v\n", this.Name, err)
 							} else {
 								//restart service
 								this.Restart()
@@ -250,10 +254,10 @@ func (this *service) Update() {
 
 				}
 			} else {
-				log.Printf("%s update error %v\n", this.Name, err)
+				log.Printf("%s update unmarshal error %v\n", this.Name, err)
 			}
 		} else {
-			log.Printf("%s update error %v\n", this.Name, err)
+			log.Printf("%s update config error %v\n", this.Name, err)
 		}
 	}
 }
@@ -269,7 +273,6 @@ func (this *service) getRemoteConfig() (string, error) {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		log.Printf("%s update error %v\n", this.Name, err)
 		return "", err
 	} else {
 		data, _ := ioutil.ReadAll(resp.Body)
@@ -277,7 +280,6 @@ func (this *service) getRemoteConfig() (string, error) {
 			//success
 			return string(data), nil
 		} else {
-			log.Printf("%s update error %v\n", this.Name, string(data))
 			return "", errors.New(string(data))
 		}
 	}
