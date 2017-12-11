@@ -236,14 +236,13 @@ func (this *service) Update() {
 						if err != nil {
 							log.Printf("%s update error %v\n", this.Name, err)
 						} else {
-
-							//err := unzip(file, dir)
-							//if err != nil {
-							//	log.Printf("%s update error %v\n", this.Name, err)
-							//} else {
-							//	//restart service
-							//	this.Restart()
-							//}
+							err := untar(file, dir)
+							if err != nil {
+								log.Printf("%s update error %v\n", this.Name, err)
+							} else {
+								//restart service
+								this.Restart()
+							}
 						}
 					} else {
 						log.Printf("%s zip or tar file not founded\n", this.Name)
