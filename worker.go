@@ -16,6 +16,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"fmt"
 )
 
 type services []*service
@@ -191,6 +192,7 @@ func (this *service) KeepAlive() {
 func (this *service) Update() {
 	//get config file
 	if this.Config.Deployment != nil && this.Config.Deployment.ConfigPath != "" {
+		fmt.Println("update",this.Config.Deployment)
 		content, err := this.getRemoteConfig()
 		if err == nil {
 			//check version
@@ -281,6 +283,7 @@ func (this *service) updateService(content string) error {
 		}
 		log.Printf("%s update success to version:%v\n", this.Name, this.Config.Deployment.Version)
 		this.Restart(rude)
+		fmt.Println("updated",this.Config.Deployment)
 		return nil
 	}
 }
@@ -384,7 +387,6 @@ func (this *service) Stop() error {
 
 func (this *service) Restart(rude ...bool) error {
 	r := len(rude)>0 && rude[0]
-	println(r)
 	if this.Config.Grace && !r {
 		_, pid := this.IsRunning()
 
