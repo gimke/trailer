@@ -143,11 +143,11 @@ func (this *service) Monitor() {
 			this.KeepAlive()
 			if !this.IsExist() {
 				//try to update
-				this.Update()
+				this = this.Update()
 			}
 		} else {
 			//is running
-			this.Update()
+			this = this.Update()
 		}
 		end := time.Now()
 		latency := end.Sub(start)
@@ -189,7 +189,7 @@ func (this *service) KeepAlive() {
 	}
 }
 
-func (this *service) Update() {
+func (this *service) Update() *service {
 	//get config file
 	if this.Config.Deployment != nil && this.Config.Deployment.ConfigPath != "" {
 		fmt.Println("update",this.Config.Deployment)
@@ -231,7 +231,7 @@ func (this *service) Update() {
 							if err != nil {
 								log.Printf("%s update unzip file error %v\n", this.Name, err)
 							} else {
-								this.updateService(content)
+								return this.updateService(content)
 							}
 						}
 					} else if remoteConfig.Deployment.Tar != "" {
@@ -246,13 +246,12 @@ func (this *service) Update() {
 							if err != nil {
 								log.Printf("%s update untar file error %v\n", this.Name, err)
 							} else {
-								this.updateService(content)
+								return this.updateService(content)
 							}
 						}
 					} else {
 						log.Printf("%s zip or tar file not founded\n", this.Name)
 					}
-
 				}
 			} else {
 				log.Printf("%s update unmarshal error %v\n", this.Name, err)
@@ -261,18 +260,21 @@ func (this *service) Update() {
 			log.Printf("%s update config error %v\n", this.Name, err)
 		}
 	}
+	return this
 }
 
-func (this *service) updateService(content string) error {
+func (this *service) updateService(content string) *service {
 	p := BinaryDir + "/services/" + this.Name + this.EXT
 	c := []byte(content)
 	err := ioutil.WriteFile(p, c, 0666)
 	if err != nil {
-		return err
+		return nil
 	} else {
 		//check if command changes
 		rude := false
 		tobeupdate := fromFile(this.Name + this.EXT)
+		fmt.Println("tobeupdate",tobeupdate.Config.Deployment)
+
 		if strings.Join(tobeupdate.Config.Env, "") == strings.Join(this.Config.Env, "") &&
 			strings.Join(tobeupdate.Config.Command, "") == strings.Join(this.Config.Command, "") {
 			this = tobeupdate
@@ -284,7 +286,7 @@ func (this *service) updateService(content string) error {
 		log.Printf("%s update success to version:%v\n", this.Name, this.Config.Deployment.Version)
 		this.Restart(rude)
 		fmt.Println("updated",this.Config.Deployment)
-		return nil
+		return this
 	}
 }
 
