@@ -6,7 +6,6 @@ import (
 	"github.com/gimke/cartlog"
 	"os"
 	"path/filepath"
-	"syscall"
 )
 
 const (
@@ -69,15 +68,6 @@ Usage of trailer console:
   stop              Stop a service
   restart           Restart a service
 `)
-}
-
-func getProcess(pid int) (*os.Process, bool) {
-	process, _ := os.FindProcess(pid)
-	err := process.Signal(syscall.Signal(0))
-	if err != nil {
-		return nil, false
-	}
-	return process, true
 }
 
 func printStatus(action, status string, err error) {

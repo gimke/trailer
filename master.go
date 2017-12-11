@@ -20,7 +20,7 @@ func (m master) Version() {
 
 func (m master) Start() {
 	action := "Starting service:"
-	if pid, _ := m.GetPid(); pid != 0 {
+	if pid := m.GetPid(); pid != 0 {
 		//is running
 		printStatus(action, failed, ErrAlreadyRunning)
 	} else {
@@ -38,9 +38,9 @@ func (m master) Start() {
 
 func (m master) Stop() {
 	action := "Stopping service:"
-	if pid, p := m.GetPid(); pid != 0 {
+	if pid := m.GetPid(); pid != 0 {
 		//is running
-		err := p.Signal(syscall.SIGINT)
+		err := syscall.Kill(pid, syscall.SIGINT)
 		if err != nil {
 			printStatus(action, failed, err)
 			return
@@ -50,7 +50,7 @@ func (m master) Stop() {
 		go func() {
 			i := 0
 			for {
-				if pid, _ := m.GetPid(); pid == 0 {
+				if pid := m.GetPid(); pid == 0 {
 					quitStop <- true
 					break
 				}
@@ -74,7 +74,7 @@ func (m master) Restart() {
 }
 
 func (m master) Process() {
-	if pid, _ := m.GetPid(); pid != 0 {
+	if pid := m.GetPid(); pid != 0 {
 		fmt.Fprintln(os.Stderr, "\033[31m"+ErrAlreadyRunning.Error()+"\033[0m")
 		os.Exit(1)
 	} else {
@@ -86,7 +86,7 @@ func (m master) Process() {
 			for {
 				sig := <-sigs
 				Logger.Info("Service Get signal %v", sig)
-				time.Sleep(6*time.Second)
+				time.Sleep(6 * time.Second)
 				if sig == syscall.SIGUSR2 {
 					Quit <- true
 				} else {
@@ -100,18 +100,18 @@ func (m master) Process() {
 	}
 }
 
-func (m master) GetPid() (int, *os.Process) {
+func (m master) GetPid() int {
 	content, err := ioutil.ReadFile(m.pidFile())
 	if err != nil {
-		return 0, nil
+		return 0
 	} else {
 		pid, _ := strconv.Atoi(string(content))
-		if p, ok := getProcess(pid); ok {
-			return pid, p
+		if m.processExist(pid) {
+			return pid
 		} else {
 			//if process not exist delete pid file
 			m.RemovePid()
-			return 0, nil
+			return 0
 		}
 	}
 }
@@ -127,4 +127,9 @@ func (m master) RemovePid() error {
 
 func (m master) pidFile() string {
 	return binPath + "/run/" + string(m) + ".pid"
+}
+
+func (m master) processExist(pid int) bool {
+	killErr := syscall.Kill(pid, syscall.Signal(0))
+	return killErr == nil
 }
