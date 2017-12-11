@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/Unknwon/bra/cmd"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -231,6 +230,21 @@ func (this *service) Update() {
 						}
 					} else if remoteConfig.Deployment.Tar != "" {
 						//download tar
+						file := dir + "/tar/" + remoteVersion + ".tar.gz"
+						url := strings.Replace(remoteConfig.Deployment.Tar, "{{version}}", remoteVersion, -1)
+						err := downloadFile(file, url)
+						if err != nil {
+							log.Printf("%s update error %v\n", this.Name, err)
+						} else {
+
+							//err := unzip(file, dir)
+							//if err != nil {
+							//	log.Printf("%s update error %v\n", this.Name, err)
+							//} else {
+							//	//restart service
+							//	this.Restart()
+							//}
+						}
 					} else {
 						log.Printf("%s zip or tar file not founded\n", this.Name)
 					}

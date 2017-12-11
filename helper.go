@@ -10,6 +10,8 @@ import (
 	"archive/zip"
 	"strings"
 	"io/ioutil"
+	"compress/gzip"
+	"archive/tar"
 )
 
 const (
@@ -120,6 +122,79 @@ func unzip(src, dest string) error {
 	}
 	return nil
 }
+
+func untar(src, dest string) error {
+
+	r,_ := os.Open(src)
+
+	gzr, err := gzip.NewReader(r)
+	if err != nil {
+		return err
+	}
+	tr := tar.NewReader(gzr)
+	defer func() {
+		if err := r.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	os.MkdirAll(dest, 0755)
+
+	// Closure to address file descriptors issue with all the deferred .Close() methods
+	extractAndWriteFile := func(h *tar.Header) error {
+
+		//remove first folder
+		name := strings.Join(strings.Split(h.Name,"/")[1:],"/")
+		path := filepath.Join(dest, name)
+
+		if h.Typeflag == tar.TypeDir {
+			os.MkdirAll(path, 0755)
+		} else if  h.Typeflag == tar.TypeReg {
+			os.MkdirAll(filepath.Dir(path), os.FileMode(h.Mode))
+			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(h.Mode))
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if err := f.Close(); err != nil {
+					panic(err)
+				}
+			}()
+
+			_, err = io.Copy(f, tr)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+
+	for {
+		header, err := tr.Next()
+		switch {
+
+		// if no more files are found return
+		case err == io.EOF:
+			return nil
+
+			// return any other error
+		case err != nil:
+			return err
+
+			// if the header is nil, just skip it (not sure how this happens)
+		case header == nil:
+			continue
+		}
+
+		err = extractAndWriteFile(header)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 
 func makeFile(path string) *os.File {
 	dir := filepath.Dir(path)
