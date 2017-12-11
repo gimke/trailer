@@ -277,10 +277,10 @@ func (this *service) updateService(content string) *service {
 
 		if strings.Join(tobeupdate.Config.Env, "") == strings.Join(this.Config.Env, "") &&
 			strings.Join(tobeupdate.Config.Command, "") == strings.Join(this.Config.Command, "") {
-			this = tobeupdate
+			this.Config = tobeupdate.Config
 			rude = false
 		} else {
-			this = tobeupdate
+			this.Config = tobeupdate.Config
 			rude = true
 		}
 		log.Printf("%s update success to version:%v\n", this.Name, this.Config.Deployment.Version)
