@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"github.com/Unknwon/bra/cmd"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -91,7 +92,7 @@ func fromFile(fileName string) *service {
 	//check json file or yaml file
 	ext := filepath.Ext(fileName)
 	if ext == ".json" || ext == ".yaml" {
-		if _, err := os.Stat(BinaryDir + "/services/" + fileName); !os.IsNotExist(err) {
+		if isExist(BinaryDir + "/services/" + fileName) {
 			//find json file
 			c, err := ioutil.ReadFile(BinaryDir + "/services/" + fileName)
 			if err == nil {
@@ -288,6 +289,10 @@ func (this *service) Start() error {
 	command := this.abs(this.Config.Command[0])
 	dir := filepath.Dir(command)
 
+	if _, err := exec.LookPath(command); err != nil {
+		return err
+	}
+
 	cmd := exec.Command(command, this.Config.Command[1:]...)
 	if len(this.Config.Env) > 0 {
 		cmd.Env = append(os.Environ(), this.Config.Env...)
@@ -377,10 +382,10 @@ func (this *service) IsRunning() (bool, int) {
 
 func (this *service) IsExist() bool {
 	command := this.abs(this.Config.Command[0])
-	if _, err := os.Stat(command); os.IsNotExist(err) {
-		return false
+	if _, err := exec.LookPath(command); err == nil {
+		return true
 	}
-	return true
+	return false
 }
 
 func (this *service) GetPIDPath() string {

@@ -160,3 +160,10 @@ func downloadFile(file string, url string) (err error) {
 	}
 	return nil
 }
+
+func isExist(file string) bool {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
