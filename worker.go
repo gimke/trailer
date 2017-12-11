@@ -206,7 +206,7 @@ func (this *service) Update() {
 			if err == nil {
 				//check version
 				remoteVersion := remoteConfig.Deployment.Version
-				if remoteVersion != this.Config.Deployment.Version {
+				if remoteVersion != this.Config.Deployment.Version || !this.IsExist() {
 					//update
 
 					log.Printf("%s begin update remote:%s current:%s\n", this.Name, remoteVersion, this.Config.Deployment.Version)
