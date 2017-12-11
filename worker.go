@@ -16,7 +16,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"fmt"
 )
 
 type services []*service
@@ -189,10 +188,9 @@ func (this *service) KeepAlive() {
 	}
 }
 
-func (this *service) Update() *service {
+func (this *service) Update() {
 	//get config file
 	if this.Config.Deployment != nil && this.Config.Deployment.ConfigPath != "" {
-		fmt.Println("update",this)
 		content, err := this.getRemoteConfig()
 		if err == nil {
 			//check version
@@ -231,7 +229,10 @@ func (this *service) Update() *service {
 							if err != nil {
 								log.Printf("%s update unzip file error %v\n", this.Name, err)
 							} else {
-								return this.updateService(content)
+								err = this.updateService(content)
+								if err !=nil  {
+									log.Printf("%s update service error %v\n", this.Name, err)
+								}
 							}
 						}
 					} else if remoteConfig.Deployment.Tar != "" {
@@ -246,7 +247,10 @@ func (this *service) Update() *service {
 							if err != nil {
 								log.Printf("%s update untar file error %v\n", this.Name, err)
 							} else {
-								return this.updateService(content)
+								err = this.updateService(content)
+								if err !=nil  {
+									log.Printf("%s update service error %v\n", this.Name, err)
+								}
 							}
 						}
 					} else {
@@ -260,20 +264,18 @@ func (this *service) Update() *service {
 			log.Printf("%s update config error %v\n", this.Name, err)
 		}
 	}
-	return this
 }
 
-func (this *service) updateService(content string) *service {
+func (this *service) updateService(content string) error {
 	p := BinaryDir + "/services/" + this.Name + this.EXT
 	c := []byte(content)
 	err := ioutil.WriteFile(p, c, 0666)
 	if err != nil {
-		return nil
+		return err
 	} else {
 		//check if command changes
 		rude := false
 		tobeupdate := fromFile(this.Name + this.EXT)
-		fmt.Println("tobeupdate",tobeupdate)
 
 		if strings.Join(tobeupdate.Config.Env, "") == strings.Join(this.Config.Env, "") &&
 			strings.Join(tobeupdate.Config.Command, "") == strings.Join(this.Config.Command, "") {
@@ -285,9 +287,8 @@ func (this *service) updateService(content string) *service {
 		}
 		log.Printf("%s update success to version:%v\n", this.Name, this.Config.Deployment.Version)
 		this.Restart(rude)
-		fmt.Println("updated",this)
-		return this
 	}
+	return nil
 }
 
 func (this *service) getRemoteConfig() (string, error) {
