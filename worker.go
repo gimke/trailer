@@ -209,7 +209,7 @@ func (this *service) Update() {
 				if remoteVersion != this.Config.Deployment.Version {
 					//update
 
-					log.Printf("%s begin update remote:%s this:%s\n", this.Name, remoteVersion, this.Config.Deployment.Version)
+					log.Printf("%s begin update remote:%s current:%s\n", this.Name, remoteVersion, this.Config.Deployment.Version)
 					dir, _ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
 					if !this.IsExist() {
 						if err := os.MkdirAll(dir, os.ModePerm); err != nil {
@@ -279,6 +279,7 @@ func (this *service) updateService(content string) error {
 			this = tobeupdate
 			rude = true
 		}
+		log.Printf("%s update success to version:%v\n", this.Name, this.Config.Deployment.Version)
 		this.Restart(rude)
 		return nil
 	}
