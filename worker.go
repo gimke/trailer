@@ -42,12 +42,12 @@ type config struct {
 }
 
 type deployment struct {
-	ConfigHeaders []string `json:"configHeaders" yaml:"config_headers"`
-	ConfigPath    string   `json:"configPath" yaml:"config_path"`
-	Version       string   `json:"version" yaml:"version"`
+	ConfigHeaders   []string `json:"configHeaders" yaml:"config_headers"`
+	ConfigPath      string   `json:"configPath" yaml:"config_path"`
+	Version         string   `json:"version" yaml:"version"`
 	DownloadHeaders []string `json:"downloadHeaders" yaml:"download_headers"`
-	Zip           string   `json:"zip" yaml:"zip"`
-	Tar           string   `json:"tar" yaml:"tar"`
+	Zip             string   `json:"zip" yaml:"zip"`
+	Tar             string   `json:"tar" yaml:"tar"`
 }
 
 var wg sync.WaitGroup
@@ -150,7 +150,7 @@ func (this *service) Monitor() {
 		}
 		end := time.Now()
 		latency := end.Sub(start)
-		log.Printf("%s latency time %v\n",this.Name, latency)
+		log.Printf("%s latency time %v\n", this.Name, latency)
 		for i := 0; i < 60; i++ {
 			if ShouldQuit {
 				break
@@ -208,7 +208,8 @@ func (this *service) Update() {
 				remoteVersion := remoteConfig.Deployment.Version
 				if remoteVersion != this.Config.Deployment.Version {
 					//update
-					log.Printf("%s begin update\n", this.Name)
+
+					log.Printf("%s begin update remote:%s this:%s\n", this.Name, remoteVersion, this.Config.Deployment.Version)
 					dir, _ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
 					if !this.IsExist() {
 						if err := os.MkdirAll(dir, os.ModePerm); err != nil {
@@ -260,15 +261,25 @@ func (this *service) Update() {
 	}
 }
 
-func (this *service) updateService(content string) error{
-	path := BinaryDir+"/services/"+this.Name+this.EXT
+func (this *service) updateService(content string) error {
+	p := BinaryDir + "/services/" + this.Name + this.EXT
 	c := []byte(content)
-	err := ioutil.WriteFile(path, c, 0666)
+	err := ioutil.WriteFile(p, c, 0666)
 	if err != nil {
 		return err
 	} else {
-		this = fromFile(this.Name+this.EXT)
-		this.Restart()
+		//check if command changes
+		rude := false
+		tobeupdate := fromFile(this.Name + this.EXT)
+		if strings.Join(tobeupdate.Config.Env, "") == strings.Join(this.Config.Env, "") &&
+			strings.Join(tobeupdate.Config.Command, "") == strings.Join(this.Config.Command, "") {
+			this = tobeupdate
+			rude = false
+		} else {
+			this = tobeupdate
+			rude = true
+		}
+		this.Restart(rude)
 		return nil
 	}
 }
@@ -370,8 +381,10 @@ func (this *service) Stop() error {
 	return nil
 }
 
-func (this *service) Restart() error {
-	if this.Config.Grace {
+func (this *service) Restart(rude ...bool) error {
+	r := len(rude)>0 && rude[0]
+	println(r)
+	if this.Config.Grace && !r {
 		_, pid := this.IsRunning()
 
 		cmd := exec.Command("kill", "-USR2", strconv.Itoa(pid))
