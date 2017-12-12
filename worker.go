@@ -3,13 +3,21 @@ package main
 import (
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 )
 
-func Work() {
-	s:=load(name)
-	if s.GetPid() !=0 {
+type worker struct {
+	mu sync.Mutex
+	wg sync.WaitGroup
+	firstInit bool
+	*services
+}
+
+func (w *worker) Work() {
+	s := load(name)
+	if s.GetPid() != 0 {
 		Logger.Error(ErrAlreadyRunning.Error())
 		os.Exit(1)
 	}
@@ -23,13 +31,45 @@ func Work() {
 			Logger.Info("Service Get signal %v", sig)
 			time.Sleep(6 * time.Second)
 			if sig == syscall.SIGUSR2 {
-				Quit <- true
+				w.Load()
 			} else {
 				Quit <- true
 			}
 		}
 	}()
+	go w.Do()
 	<-Quit
 	Logger.Info("Service terminated")
 	s.RemovePid()
+}
+
+
+func (w *worker) Do() {
+	w.Load()
+	for {
+		w.mu.Lock()
+		for _, s := range *w.services {
+			w.wg.Add(1)
+			//first run it
+			Logger.Info(s.Name)
+			if w.firstInit {
+				//s.RunAtLoad()
+			}
+			go w.Monitor()
+		}
+		w.firstInit = false
+		w.wg.Wait()
+		w.mu.Unlock()
+	}
+}
+
+func (w *worker) Load() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.services = newServices()
+	w.services.GetList()
+}
+func (w *worker) Monitor() {
+	time.Sleep(6*time.Second)
+	w.wg.Done()
 }
