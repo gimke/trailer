@@ -2,41 +2,55 @@ package main
 
 import (
 	"flag"
+	"fmt"
 )
 
 func main() {
 	flag.Usage = usage
-	flag.BoolVar(&startFlag, "start", false, startUsage)
-	flag.BoolVar(&startFlag, "s", false, startUsage)
-	flag.BoolVar(&stopFlag, "stop", false, stopUsage)
-	flag.BoolVar(&stopFlag, "q", false, stopUsage)
-	flag.BoolVar(&restartFlag, "restart", false, restartUsage)
-	flag.BoolVar(&restartFlag, "r", false, restartUsage)
-	flag.BoolVar(&versionFlag, "version", false, versionUsage)
-	flag.BoolVar(&versionFlag, "v", false, versionUsage)
-	flag.BoolVar(&daemonFlag, "daemon", false, daemonUsage)
+
+	flag.BoolVar(&startFlag, "start", false, "")
+	flag.BoolVar(&startFlag, "s", false, "")
+	flag.BoolVar(&stopFlag, "stop", false, "")
+	flag.BoolVar(&stopFlag, "quit", false, "")
+	flag.BoolVar(&stopFlag, "q", false, "")
+	flag.BoolVar(&restartFlag, "restart", false, "")
+	flag.BoolVar(&restartFlag, "r", false, "")
+	flag.BoolVar(&listFlag, "l", false, "")
+	flag.BoolVar(&listFlag, "list", false, "")
+	flag.BoolVar(&versionFlag, "v", false, "")
+	flag.BoolVar(&versionFlag, "version", false, "")
+	flag.BoolVar(&daemonFlag, "daemon", false, "")
 	flag.Parse()
 
-	m := master(name)
+	c := &console{}
 
 	if versionFlag {
-		m.Version()
+		fmt.Println(version)
 		return
 	}
+
+	if listFlag {
+		c.List()
+		return
+	}
+
 	if startFlag {
-		m.Start()
+		c.Start()
 		return
 	}
+
 	if stopFlag {
-		m.Stop()
+		c.Stop()
 		return
 	}
+
 	if restartFlag {
-		m.Restart()
+		c.Restart()
 		return
 	}
+
 	if daemonFlag {
-		m.Process()
+		Work()
 		return
 	}
 

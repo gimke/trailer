@@ -1,10 +1,11 @@
 name: demo
 env:
-  - MY_ENV=hello
+  - MY_ENV=Test
 
 command:
-  - ./demo/demo
+  - ./home/demo/demo
 
-pid_file: ./demo/demo.pid
+pid_file: ./home/demo/demo.pid
+
 run_at_load: true
 keep_alive: false
