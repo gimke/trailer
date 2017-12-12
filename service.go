@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -9,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"fmt"
 	"time"
 )
 
@@ -80,7 +80,7 @@ func (s *service) Start() error {
 		return ErrAlreadyRunning
 	}
 	command := resovePath(s.Config.Command[0])
-	dir,_ := filepath.Abs(filepath.Dir(command))
+	dir, _ := filepath.Abs(filepath.Dir(command))
 
 	cmd := exec.Command(command, s.Config.Command[1:]...)
 	if len(s.Config.Env) > 0 {
@@ -110,7 +110,7 @@ func (s *service) Start() error {
 		go func() {
 			cmd.Wait()
 		}()
-		if s.Config.PidFile=="" {
+		if s.Config.PidFile == "" {
 			s.SetPid(cmd.Process.Pid)
 		}
 	}
@@ -122,11 +122,11 @@ func (s *service) Stop() error {
 	if pid == 0 {
 		return ErrAlreadyStopped
 	} else {
-		err := syscall.Kill(pid,syscall.SIGINT)
+		err := syscall.Kill(pid, syscall.SIGINT)
 		if err != nil {
 			return err
 		}
-		arr := []string{"Stopping "+s.Name+".", "Stopping "+s.Name+"..", "Stopping "+s.Name+"..."}
+		arr := []string{"Stopping " + s.Name + ".", "Stopping " + s.Name + "..", "Stopping " + s.Name + "..."}
 		quitStop := make(chan bool)
 		go func() {
 			i := 0
@@ -144,7 +144,7 @@ func (s *service) Stop() error {
 			}
 		}()
 		<-quitStop
-		if s.Config.PidFile=="" {
+		if s.Config.PidFile == "" {
 			s.RemovePid()
 		}
 	}
@@ -154,7 +154,7 @@ func (s *service) Restart() error {
 	pid := s.GetPid()
 	if pid != 0 {
 		if s.Config.Grace {
-			err := syscall.Kill(pid,syscall.SIGUSR2)
+			err := syscall.Kill(pid, syscall.SIGUSR2)
 			if err != nil {
 				return err
 			}
@@ -178,6 +178,13 @@ func (s *service) Restart() error {
 	return nil
 }
 
+func (s *service) IsExist() bool {
+	command := resovePath(s.Config.Command[0])
+	if _, err := exec.LookPath(command); err == nil {
+		return true
+	}
+	return false
+}
 
 func (s *service) GetPid() int {
 	content, err := ioutil.ReadFile(s.pidFile())

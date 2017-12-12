@@ -17,7 +17,7 @@ const (
 type console struct{}
 
 func (c *console) List() {
-	fmt.Printf("%-4s %-6s %-20s %-10s %-10s %-10s\n", "Num", "Pid", "Name", "Status", "RunAtLoad", "KeepAlive")
+	fmt.Printf("%-4s %-6s %-20s %-10s %-10s %-10s %-10s\n", "Num", "Pid", "Name", "Status", "RunAtLoad", "KeepAlive", "AutoUpdate")
 	ss := newServices()
 	ss.GetList()
 	for index, s := range *ss {
@@ -35,16 +35,29 @@ func (c *console) List() {
 			keepAlive = "Y"
 			keepAliveColor = green
 		}
+		autoUpdate := "N"
+		autoUpdateColor := red
+		if s.Config.Deployment != nil {
+			autoUpdate = "Y"
+			if s.Config.Deployment.Version != "" {
+				autoUpdate = "Y" + " (" + s.Config.Deployment.Version + ")"
+			}
+			autoUpdateColor = green
+		}
 		pidString := "-"
+		if !s.IsExist() {
+			running = "NOTEXIST"
+		}
 		if pid := s.GetPid(); pid != 0 {
 			running = "RUNNING"
 			color = green
 			pidString = strconv.Itoa(pid)
 		}
-		fmt.Printf("%-4s %-6s %-20s %s%-10s%s %s%-10s%s %s%-10s%s\n", strconv.Itoa(index+1), pidString, s.Name,
+		fmt.Printf("%-4s %-6s %-20s %s%-10s%s %s%-10s%s %s%-10s%s %s%-10s%s\n", strconv.Itoa(index+1), pidString, s.Name,
 			color, running, reset,
 			runAtLoadColor, runAtLoad, reset,
-			keepAliveColor, keepAlive, reset)
+			keepAliveColor, keepAlive, reset,
+			autoUpdateColor, autoUpdate, reset)
 	}
 }
 

@@ -50,7 +50,8 @@ func main() {
 	}
 
 	if daemonFlag {
-		Work()
+		w := worker{}
+		w.Work()
 		return
 	}
 

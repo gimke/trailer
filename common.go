@@ -30,9 +30,10 @@ var (
 	listFlag    bool
 	versionFlag bool
 	daemonFlag  bool
+	shouldQuit  = false
 	Quit        = make(chan bool)
 
-	Logger = cartlog.GetLogger()
+	Logger = cartlog.New()
 
 	ErrAlreadyRunning = errors.New("Service is already running")
 	ErrAlreadyStopped = errors.New("Service has already been stopped")
