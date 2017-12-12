@@ -136,21 +136,16 @@ func (s *service) KeepAlive() {
 func (s *service) Update() {
 	if pid := s.GetPid(); pid != 0 || !s.IsExist() {
 		if s.Config.Deployment != nil && s.Config.Deployment.ConfigPath != "" {
-			content, err := s.getRemoteConfig()
+			remoteConfig, err := s.getRemoteConfig()
 			if err == nil {
-				remoteConfig := &config{}
-				err = yaml.Unmarshal([]byte(content), &remoteConfig)
-				if err == nil {
-					remoteVersion := remoteConfig.Deployment.Version
-					if remoteVersion != s.Config.Deployment.Version || !s.IsExist() {
-						Logger.Info("%s begin update remote:%s current:%s", s.Name, remoteVersion, s.Config.Deployment.Version)
-						dir, _ := filepath.Abs(filepath.Dir(resovePath(remoteConfig.Command[0])))
-						if !s.IsExist() {
-							os.MkdirAll(dir, 0755)
-						}
+				remoteVersion := remoteConfig.Deployment.Version
+				if remoteVersion != s.Config.Deployment.Version || !s.IsExist() {
+					Logger.Info("%s begin update remote:%s current:%s", s.Name, remoteVersion, s.Config.Deployment.Version)
+					dir, _ := filepath.Abs(filepath.Dir(resovePath(remoteConfig.Command[0])))
+					if !s.IsExist() {
+						os.MkdirAll(dir, 0755)
 					}
-				} else {
-					Logger.Error("%s update unmarshal error %v", s.Name, err)
+					//todo download file from git and unzip then start service
 				}
 			} else {
 				Logger.Error("%s update config error %v", s.Name, err)
@@ -159,7 +154,7 @@ func (s *service) Update() {
 	}
 }
 
-func (s *service) getRemoteConfig() (string, error) {
+func (s *service) getRemoteConfig() (*config, error) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", s.Config.Deployment.ConfigPath, nil)
 	for _, header := range s.Config.Deployment.ConfigHeaders {
@@ -171,14 +166,20 @@ func (s *service) getRemoteConfig() (string, error) {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		return "", err
+		return nil, err
 	} else {
 		data, _ := ioutil.ReadAll(resp.Body)
 		if resp.StatusCode == 200 {
 			//success
-			return string(data), nil
+			remoteConfig := &config{}
+			err = yaml.Unmarshal(data, &remoteConfig)
+			if err == nil {
+				return remoteConfig, nil
+			} else {
+				return nil, err
+			}
 		} else {
-			return "", errors.New(string(data))
+			return nil, errors.New(string(data))
 		}
 	}
 }

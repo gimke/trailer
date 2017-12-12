@@ -121,16 +121,33 @@ keep_alive: false
 
 	usageText = `Usage of trailer:
 
+  -l,-list          List services
+                    +--------------------------------------------+
+                    |  list all services ./trailer -l            |
+                    +--------------------------------------------+
+
   -s,-start         Start service
+                    +--------------------------------------------+
+                    |  start normal service ./trailer -s demo    |
+                    |  start daemon service ./trailer -s         |
+                    +--------------------------------------------+
+
   -q,-stop          Stop service
+                    +--------------------------------------------+
+                    |  stop normal service ./trailer -q demo     |
+                    |  stop daemon service ./trailer -q          |
+                    +--------------------------------------------+
+
   -r,-restart       Restart service
+                    +--------------------------------------------+
+                    |  restart normal service ./trailer -r demo  |
+                    |  restart daemon service ./trailer -r       |
+                    +--------------------------------------------+
+
   -v,-version       Display version
+                    +--------------------------------------------+
+                    |  show trailer version ./trailer -v         |
+                    +--------------------------------------------+
 
-Usage of trailer console:
-
-  list              List all service
-  start             Start a service
-  stop              Stop a service
-  restart           Restart a service
 `
 )

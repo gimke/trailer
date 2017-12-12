@@ -54,5 +54,5 @@ func main() {
 		w.Work()
 		return
 	}
-
+	usage()
 }
