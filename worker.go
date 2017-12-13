@@ -165,6 +165,9 @@ func (s *service) processGit(client git.Client) {
 			if s.Config.Deployment.Payload != "" {
 				//Payload callback
 				data := url.Values{}
+				hostName,_:= os.Hostname()
+				data.Add("hostName", hostName)
+				data.Add("name", s.Name)
 				if err != nil {
 					data.Add("status", "failed")
 					data.Add("error", err.Error())
