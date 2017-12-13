@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 )
-
+/*
+todo 增加 tok 文件 保存 token 解决 github public 一小时轮训60次的限制 增加gitlab的支持
+*/
 func main() {
 	flag.Usage = usage
 
