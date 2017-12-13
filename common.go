@@ -177,8 +177,7 @@ command:
   - ./trailer
   - -daemon
 
-run_at_load: false
-keep_alive: false
+grace: true
 `
 
 	usageText = `Usage of trailer:
