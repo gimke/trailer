@@ -11,6 +11,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"net/http"
+	"net/url"
 )
 
 type worker struct {
@@ -150,7 +152,37 @@ func (s *service) Update() {
 
 func (s *service) processGit(client git.Client) {
 	//get content from remote git
+	var (
+		preVersion string
+		version string
+		zip     string
+	)
 	c, err := client.GetConfig()
+	defer func() {
+		payload := s.Config.Deployment.Payload
+		if s.Config.Deployment.Payload != "" {
+			//Payload callback
+			data := url.Values{}
+			if err != nil {
+				data.Add("status","failed")
+				data.Add("error",err.Error())
+			} else {
+				data.Add("status","success")
+				data.Add("preVersion",preVersion)
+				data.Add("version",version)
+			}
+			resp,err := http.PostForm(payload,data)
+			if err != nil {
+				Logger.Error("%s payload:%s error: %v", s.Name,payload, err)
+			}
+			resultData, _ := ioutil.ReadAll(resp.Body)
+			if resp.StatusCode == 200 {
+				Logger.Error("%s payload:%s success: %s", s.Name,payload, string(resultData))
+			} else {
+				Logger.Error("%s payload:%s error: %s", s.Name,payload, string(resultData))
+			}
+		}
+	}()
 	if err != nil {
 		Logger.Error("%s get config error: %v", s.Name, err)
 		return
@@ -163,10 +195,7 @@ func (s *service) processGit(client git.Client) {
 		return
 	}
 	arr := strings.Split(remoteConfig.Deployment.Version, ":")
-	var (
-		version string
-		zip     string
-	)
+
 	if arr[0] == "release" {
 		version, zip, err = client.GetRelease(arr[1])
 	} else if arr[0] == "branch" {
@@ -179,8 +208,8 @@ func (s *service) processGit(client git.Client) {
 	Logger.Info("%s find version:%s zip:%s", s.Name, version, zip)
 
 	//check local version
-	localVersion := s.GetVersion()
-	if localVersion == version {
+	preVersion = s.GetVersion()
+	if preVersion == version {
 		return
 	}
 
@@ -203,7 +232,6 @@ func (s *service) processGit(client git.Client) {
 		return
 	}
 	Logger.Info("%s update service success new version:%s", s.Name, version)
-
 }
 
 func (s *service) updateService(content, version string) error {
