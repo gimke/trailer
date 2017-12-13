@@ -2,8 +2,7 @@
 logs/
 run/
 services/*
-!services/demo.yaml
-!services/ping.json
+!services/cartdemo.yaml
 home/
 vendor/*
 !vendor/vendor.json
