@@ -137,7 +137,7 @@ func (s *service) Update() {
 			var client git.Client
 			switch strings.ToLower(s.Config.Deployment.Type) {
 			case "github":
-				client = &git.Github{}
+				client = git.GithubClient(s.Config.Deployment.Token,s.Config.Deployment.Repository)
 				break
 			//case "gitlab":
 			//	client = &git.Gitlab{}
@@ -163,7 +163,10 @@ func (s *service) Update() {
 }
 
 func (s *service) processGit(client git.Client) {
-	client.DownloadFile()
+	arr := strings.Split(s.Config.Deployment.Version,":")
+	if arr[0] == "release" {
+		client.GetRelease(arr[1])
+	}
 }
 
 //func (s *service) getRemoteConfig() (*config, error) {

@@ -1,7 +1,7 @@
 package git
 
 type Client interface {
-	NewClient(string)
-	GetVersion()
-	DownloadFile()
+	GetRelease(tag string) (string, error)
+	DownloadFile(file string) error
+	Termination()
 }

@@ -1,5 +1,7 @@
 package git
 
+var gitlabBaseURL = "https://gitlab.com/"
+
 //var _ Client = &Gitlab{}
 //
 //type Gitlab struct {
