@@ -24,24 +24,23 @@ type config struct {
 	Name    string
 	Env     []string
 	Command []string
-	PidFile string `json:"pidFile" yaml:"pid_file"`
+	PidFile string `yaml:"pid_file"`
 
-	StdOutFile string `json:"stdOutFile" yaml:"std_out_file"`
-	StdErrFile string `json:"stdErrFile" yaml:"std_err_file"`
-	Grace      bool   `json:"grace" yaml:"grace"`
-	RunAtLoad  bool   `json:"runAtLoad" yaml:"run_at_load"`
-	KeepAlive  bool   `json:"keepAlive" yaml:"keep_alive"`
+	StdOutFile string `yaml:"std_out_file"`
+	StdErrFile string `yaml:"std_err_file"`
+	Grace      bool   `yaml:"grace"`
+	RunAtLoad  bool   `yaml:"run_at_load"`
+	KeepAlive  bool   `yaml:"keep_alive"`
 
 	Deployment *deployment
 }
 
 type deployment struct {
-	ConfigHeaders   []string `json:"configHeaders" yaml:"config_headers"`
-	ConfigPath      string   `json:"configPath" yaml:"config_path"`
-	Version         string   `json:"version" yaml:"version"`
-	DownloadHeaders []string `json:"downloadHeaders" yaml:"download_headers"`
-	Zip             string   `json:"zip" yaml:"zip"`
-	Tar             string   `json:"tar" yaml:"tar"`
+	Type       string `yaml:"type"`
+	Token      string `yaml:"token"`
+	Repository string `yaml:"repository"`
+	Version    string `yaml:"version"`
+	Payload    string `yaml:"payload"`
 }
 
 func newServices() *services {
@@ -66,7 +65,7 @@ func (ss *services) GetList() {
 	if err == nil {
 		for _, file := range files {
 			basename := file.Name()
-			if strings.HasPrefix(basename,".") {
+			if strings.HasPrefix(basename, ".") {
 				continue
 			}
 			name := strings.TrimSuffix(basename, filepath.Ext(basename))

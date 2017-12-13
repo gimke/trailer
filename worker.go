@@ -1,17 +1,12 @@
 package main
 
 import (
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"qiniupkg.com/x/errors.v7"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
+	"strings"
 )
 
 type worker struct {
@@ -135,51 +130,64 @@ func (s *service) KeepAlive() {
 //update
 func (s *service) Update() {
 	if pid := s.GetPid(); pid != 0 || !s.IsExist() {
-		if s.Config.Deployment != nil && s.Config.Deployment.ConfigPath != "" {
-			remoteConfig, err := s.getRemoteConfig()
-			if err == nil {
-				remoteVersion := remoteConfig.Deployment.Version
-				if remoteVersion != s.Config.Deployment.Version || !s.IsExist() {
-					Logger.Info("%s begin update remote:%s current:%s", s.Name, remoteVersion, s.Config.Deployment.Version)
-					dir, _ := filepath.Abs(filepath.Dir(resovePath(remoteConfig.Command[0])))
-					if !s.IsExist() {
-						os.MkdirAll(dir, 0755)
-					}
-					//todo download file from git and unzip then start service
-				}
-			} else {
-				Logger.Error("%s update config error %v", s.Name, err)
+		if s.Config.Deployment != nil && s.Config.Deployment.Type != "" {
+
+			var client gitclient
+			switch strings.ToLower(s.Config.Deployment.Type) {
+			case "github":
+				client = &github{}
+				break
 			}
+			s.processGit(client)
+
+			//remoteConfig, err := s.getRemoteConfig()
+			//if err == nil {
+			//	remoteVersion := remoteConfig.Deployment.Version
+			//	if remoteVersion != s.Config.Deployment.Version || !s.IsExist() {
+			//		Logger.Info("%s begin update remote:%s current:%s", s.Name, remoteVersion, s.Config.Deployment.Version)
+			//		dir, _ := filepath.Abs(filepath.Dir(resovePath(remoteConfig.Command[0])))
+			//		if !s.IsExist() {
+			//			os.MkdirAll(dir, 0755)
+			//		}
+			//		//todo download file from git and unzip then start service
+			//	}
+			//} else {
+			//	Logger.Error("%s update config error %v", s.Name, err)
+			//}
 		}
 	}
 }
 
-func (s *service) getRemoteConfig() (*config, error) {
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", s.Config.Deployment.ConfigPath, nil)
-	for _, header := range s.Config.Deployment.ConfigHeaders {
-		kv := strings.Split(header, ":")
-		req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
-	}
-	resp, err := client.Do(req)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-	if err != nil {
-		return nil, err
-	} else {
-		data, _ := ioutil.ReadAll(resp.Body)
-		if resp.StatusCode == 200 {
-			//success
-			remoteConfig := &config{}
-			err = yaml.Unmarshal(data, &remoteConfig)
-			if err == nil {
-				return remoteConfig, nil
-			} else {
-				return nil, err
-			}
-		} else {
-			return nil, errors.New(string(data))
-		}
-	}
+func (s *service) processGit(client gitclient) {
+	client.GetVersion()
 }
+
+//func (s *service) getRemoteConfig() (*config, error) {
+//	client := &http.Client{}
+//	req, _ := http.NewRequest("GET", s.Config.Deployment.ConfigPath, nil)
+//	for _, header := range s.Config.Deployment.ConfigHeaders {
+//		kv := strings.Split(header, ":")
+//		req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
+//	}
+//	resp, err := client.Do(req)
+//	if resp != nil {
+//		defer resp.Body.Close()
+//	}
+//	if err != nil {
+//		return nil, err
+//	} else {
+//		data, _ := ioutil.ReadAll(resp.Body)
+//		if resp.StatusCode == 200 {
+//			//success
+//			remoteConfig := &config{}
+//			err = yaml.Unmarshal(data, &remoteConfig)
+//			if err == nil {
+//				return remoteConfig, nil
+//			} else {
+//				return nil, err
+//			}
+//		} else {
+//			return nil, errors.New(string(data))
+//		}
+//	}
+//}
