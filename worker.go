@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"time"
 	"strings"
+	"github.com/gimke/trailer/git"
 )
 
 type worker struct {
@@ -132,11 +133,14 @@ func (s *service) Update() {
 	if pid := s.GetPid(); pid != 0 || !s.IsExist() {
 		if s.Config.Deployment != nil && s.Config.Deployment.Type != "" {
 
-			var client gitclient
+
+			var client git.Client
 			switch strings.ToLower(s.Config.Deployment.Type) {
 			case "github":
-				client = &github{}
+				client = &git.Github{}
 				break
+			//case "gitlab":
+			//	client = &git.Gitlab{}
 			}
 			s.processGit(client)
 
@@ -158,8 +162,8 @@ func (s *service) Update() {
 	}
 }
 
-func (s *service) processGit(client gitclient) {
-	client.GetVersion()
+func (s *service) processGit(client git.Client) {
+	client.DownloadFile()
 }
 
 //func (s *service) getRemoteConfig() (*config, error) {
