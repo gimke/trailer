@@ -1,13 +1,16 @@
 package main
 
 import (
+	"github.com/gimke/trailer/git"
+	"gopkg.in/yaml.v2"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
-	"strings"
-	"github.com/gimke/trailer/git"
+	"path/filepath"
+	"io/ioutil"
 )
 
 type worker struct {
@@ -132,69 +135,103 @@ func (s *service) KeepAlive() {
 func (s *service) Update() {
 	if pid := s.GetPid(); pid != 0 || !s.IsExist() {
 		if s.Config.Deployment != nil && s.Config.Deployment.Type != "" {
-
-
 			var client git.Client
 			switch strings.ToLower(s.Config.Deployment.Type) {
 			case "github":
-				client = git.GithubClient(s.Config.Deployment.Token,s.Config.Deployment.Repository)
+				client = git.GithubClient(s.Config.Deployment.Token, s.Config.Deployment.Repository)
 				break
-			//case "gitlab":
-			//	client = &git.Gitlab{}
+				//case "gitlab":
+				//	client = &git.Gitlab{}
 			}
 			s.processGit(client)
-
-			//remoteConfig, err := s.getRemoteConfig()
-			//if err == nil {
-			//	remoteVersion := remoteConfig.Deployment.Version
-			//	if remoteVersion != s.Config.Deployment.Version || !s.IsExist() {
-			//		Logger.Info("%s begin update remote:%s current:%s", s.Name, remoteVersion, s.Config.Deployment.Version)
-			//		dir, _ := filepath.Abs(filepath.Dir(resovePath(remoteConfig.Command[0])))
-			//		if !s.IsExist() {
-			//			os.MkdirAll(dir, 0755)
-			//		}
-			//		//todo download file from git and unzip then start service
-			//	}
-			//} else {
-			//	Logger.Error("%s update config error %v", s.Name, err)
-			//}
 		}
 	}
 }
 
 func (s *service) processGit(client git.Client) {
-	arr := strings.Split(s.Config.Deployment.Version,":")
-	if arr[0] == "release" {
-		client.GetRelease(arr[1])
+	//get content from remote git
+	_config, err := client.GetConfig()
+	if err != nil {
+		Logger.Error("%s get config error: %v", s.Name, err)
+		return
 	}
+
+	remoteConfig := &config{}
+	err = yaml.Unmarshal([]byte(_config), &remoteConfig)
+	if err != nil {
+		Logger.Error("%s get config error: %v", s.Name, err)
+		return
+	}
+	arr := strings.Split(remoteConfig.Deployment.Version, ":")
+	var (
+		version string
+		zip string
+	)
+	if arr[0] == "release" {
+		version, zip, err = client.GetRelease(arr[1])
+	} else if arr[0] == "branch"{
+		version, zip, err = client.GetRelease(arr[1])
+	}
+	if err != nil {
+		Logger.Error("%s find version error: %v", s.Name, err)
+		return
+	}
+	Logger.Info("%s find version:%s zip:%s", s.Name, version, zip)
+
+	//check local version
+	localVersion := s.GetVersion()
+	if localVersion == version {
+		return
+	}
+
+	//download zip file and unzip
+	dir, _ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
+	file := dir+"/update/"+version+".zip"
+	err = client.DownloadFile(file,zip)
+	if err != nil {
+		Logger.Error("%s update download error %v", s.Name, err)
+		return
+	}
+	err = unzip(file, dir)
+	if err != nil {
+		Logger.Error("%s update unzip file error %v", s.Name, err)
+	}
+
 }
 
-//func (s *service) getRemoteConfig() (*config, error) {
-//	client := &http.Client{}
-//	req, _ := http.NewRequest("GET", s.Config.Deployment.ConfigPath, nil)
-//	for _, header := range s.Config.Deployment.ConfigHeaders {
-//		kv := strings.Split(header, ":")
-//		req.Header.Set(strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1]))
-//	}
-//	resp, err := client.Do(req)
-//	if resp != nil {
-//		defer resp.Body.Close()
-//	}
-//	if err != nil {
-//		return nil, err
-//	} else {
-//		data, _ := ioutil.ReadAll(resp.Body)
-//		if resp.StatusCode == 200 {
-//			//success
-//			remoteConfig := &config{}
-//			err = yaml.Unmarshal(data, &remoteConfig)
-//			if err == nil {
-//				return remoteConfig, nil
-//			} else {
-//				return nil, err
-//			}
-//		} else {
-//			return nil, errors.New(string(data))
-//		}
-//	}
-//}
+func (s *service) updateService(content,version string) error {
+	p := binPath + "/services/" + s.Name + ".yaml"
+	c := []byte(content)
+	err := ioutil.WriteFile(p, c, 0666)
+	if err != nil {
+		return err
+	}
+	s.SetVersion(version)
+	//check if command changes
+	rude := false
+	tobeupdate := load(s.Name)
+
+	if strings.Join(tobeupdate.Config.Env, "") == strings.Join(s.Config.Env, "") &&
+		strings.Join(tobeupdate.Config.Command, "") == strings.Join(s.Config.Command, "") {
+		s.Config = tobeupdate.Config
+		rude = false
+	} else {
+		s.Config = tobeupdate.Config
+		rude = true
+	}
+	Logger.Info("%s update success to version:%v", s.Name, version)
+	if rude {
+		err := s.Stop()
+		if err != nil {
+			return err
+		} else {
+			err = s.Start()
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		s.Restart()
+	}
+	return nil
+}

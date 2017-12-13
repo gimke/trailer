@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 type processMode int
@@ -89,7 +90,25 @@ func (c *console) process(mode processMode) {
 			break
 		case STOP:
 			action = "Stopping " + name + ":"
+			arr := []string{"Stopping " + s.Name + ".", "Stopping " + s.Name + "..", "Stopping " + s.Name + "..."}
+			quitStop := make(chan bool)
+			go func() {
+				i := 0
+				for {
+					if pid := s.GetPid(); pid == 0 {
+						quitStop <- true
+						break
+					}
+					fmt.Printf(arr[i])
+					if i++; i == len(arr) {
+						i = 0
+					}
+					time.Sleep(1 * time.Second)
+					eraseLine()
+				}
+			}()
 			err = s.Stop()
+			<-quitStop
 			break
 		case RESTART:
 			action = "Restarting " + name + ":"

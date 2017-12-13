@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -128,21 +127,14 @@ func (s *service) Stop() error {
 		if err != nil {
 			return err
 		}
-		arr := []string{"Stopping " + s.Name + ".", "Stopping " + s.Name + "..", "Stopping " + s.Name + "..."}
 		quitStop := make(chan bool)
 		go func() {
-			i := 0
 			for {
 				if pid := s.GetPid(); pid == 0 {
 					quitStop <- true
 					break
 				}
-				fmt.Printf(arr[i])
-				if i++; i == len(arr) {
-					i = 0
-				}
 				time.Sleep(1 * time.Second)
-				eraseLine()
 			}
 		}()
 		<-quitStop
@@ -186,6 +178,20 @@ func (s *service) IsExist() bool {
 		return true
 	}
 	return false
+}
+func (s *service) GetVersion() string {
+	versionPath := binPath + "/run/" + s.Name + ".ver"
+	content, err := ioutil.ReadFile(versionPath)
+	if err != nil {
+		return ""
+	}
+	return string(content)
+}
+func (s *service) SetVersion(version string) {
+	versionPath := binPath + "/run/" + s.Name + ".ver"
+	data := []byte(version)
+	os.MkdirAll(filepath.Dir(versionPath), 0755)
+	ioutil.WriteFile(versionPath, data, 0666)
 }
 
 func (s *service) GetPid() int {
