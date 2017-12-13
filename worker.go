@@ -3,14 +3,14 @@ package main
 import (
 	"github.com/gimke/trailer/git"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
-	"path/filepath"
-	"io/ioutil"
 )
 
 type worker struct {
@@ -150,14 +150,14 @@ func (s *service) Update() {
 
 func (s *service) processGit(client git.Client) {
 	//get content from remote git
-	_config, err := client.GetConfig()
+	c, err := client.GetConfig()
 	if err != nil {
 		Logger.Error("%s get config error: %v", s.Name, err)
 		return
 	}
 
 	remoteConfig := &config{}
-	err = yaml.Unmarshal([]byte(_config), &remoteConfig)
+	err = yaml.Unmarshal([]byte(c), &remoteConfig)
 	if err != nil {
 		Logger.Error("%s get config error: %v", s.Name, err)
 		return
@@ -165,11 +165,11 @@ func (s *service) processGit(client git.Client) {
 	arr := strings.Split(remoteConfig.Deployment.Version, ":")
 	var (
 		version string
-		zip string
+		zip     string
 	)
 	if arr[0] == "release" {
 		version, zip, err = client.GetRelease(arr[1])
-	} else if arr[0] == "branch"{
+	} else if arr[0] == "branch" {
 		version, zip, err = client.GetRelease(arr[1])
 	}
 	if err != nil {
@@ -186,8 +186,8 @@ func (s *service) processGit(client git.Client) {
 
 	//download zip file and unzip
 	dir, _ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
-	file := dir+"/update/"+version+".zip"
-	err = client.DownloadFile(file,zip)
+	file := dir + "/update/" + version + ".zip"
+	err = client.DownloadFile(file, zip)
 	if err != nil {
 		Logger.Error("%s update download error %v", s.Name, err)
 		return
@@ -195,11 +195,18 @@ func (s *service) processGit(client git.Client) {
 	err = unzip(file, dir)
 	if err != nil {
 		Logger.Error("%s update unzip file error %v", s.Name, err)
+		return
 	}
+	err = s.updateService(c, version)
+	if err != nil {
+		Logger.Error("%s update service error %v", s.Name, err)
+		return
+	}
+	Logger.Info("%s update service success new version:%s", s.Name, version)
 
 }
 
-func (s *service) updateService(content,version string) error {
+func (s *service) updateService(content, version string) error {
 	p := binPath + "/services/" + s.Name + ".yaml"
 	c := []byte(content)
 	err := ioutil.WriteFile(p, c, 0666)
