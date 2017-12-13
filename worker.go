@@ -213,6 +213,7 @@ func (s *service) processGit(client git.Client) {
 	//check local version
 	preVersion = s.GetVersion()
 	if preVersion == version {
+		Logger.Info("%s preVersion=newVersion=%s", s.Name, version)
 		doPayload = false
 		return
 	}
@@ -235,7 +236,7 @@ func (s *service) processGit(client git.Client) {
 		Logger.Error("%s update service error %v", s.Name, err)
 		return
 	}
-	Logger.Info("%s update service success new version:%s", s.Name, version)
+	Logger.Info("%s update service success preVersion:%s newVersion:%s", s.Name, preVersion, version)
 }
 
 func (s *service) updateService(content, version string) error {
@@ -258,7 +259,6 @@ func (s *service) updateService(content, version string) error {
 		s.Config = tobeupdate.Config
 		rude = true
 	}
-	Logger.Info("%s update success to version:%v", s.Name, version)
 	if rude {
 		err := s.Stop()
 		if err != nil {
