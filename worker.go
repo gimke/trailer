@@ -179,7 +179,7 @@ func (s *service) processGit(client git.Client) {
 				}
 				resultData, _ := ioutil.ReadAll(resp.Body)
 				if resp.StatusCode == 200 {
-					Logger.Error("%s payload:%s success: %s", s.Name, payload, string(resultData))
+					Logger.Info("%s payload:%s success: %s", s.Name, payload, string(resultData))
 				} else {
 					Logger.Error("%s payload:%s error: %s", s.Name, payload, string(resultData))
 				}
