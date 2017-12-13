@@ -170,7 +170,7 @@ func (s *service) processGit(client git.Client) {
 	if arr[0] == "release" {
 		version, zip, err = client.GetRelease(arr[1])
 	} else if arr[0] == "branch" {
-		version, zip, err = client.GetRelease(arr[1])
+		version, zip, err = client.GetBranche(arr[1])
 	}
 	if err != nil {
 		Logger.Error("%s find version error: %v", s.Name, err)

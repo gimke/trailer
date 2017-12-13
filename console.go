@@ -41,7 +41,7 @@ func (c *console) List() {
 		if s.Config.Deployment != nil {
 			autoUpdate = "Y"
 			if s.Config.Deployment.Version != "" {
-				autoUpdate = "Y" + " (" + s.Config.Deployment.Version + ")"
+				autoUpdate = "Y" + "[" + s.GetVersion() + "]"
 			}
 			autoUpdateColor = green
 		}

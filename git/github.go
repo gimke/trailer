@@ -102,6 +102,26 @@ func (g *Github) GetRelease(tag string) (string, string, error) {
 	return version, zip, nil
 }
 
+func (g *Github) GetBranche(branche string) (string, string, error) {
+	u := g.getUrl()
+	u += "/branches/" + branche
+
+	zip := g.getUrl()+"/zipball/"+branche
+
+	data, err := g.Request("GET", u)
+	if err != nil {
+		return "", "", err
+	}
+	var jsonData map[string]interface{}
+	err = json.Unmarshal([]byte(data), &jsonData)
+	if err != nil {
+		return "", "", err
+	}
+	version := jsonData["commit"].(map[string]interface{})["sha"].(string)
+
+	return version, zip, nil
+
+}
 func (g *Github) DownloadFile(file, url string) error {
 	// Create the file
 	dir := filepath.Dir(file)
