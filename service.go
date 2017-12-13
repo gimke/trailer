@@ -66,6 +66,9 @@ func (ss *services) GetList() {
 	if err == nil {
 		for _, file := range files {
 			basename := file.Name()
+			if strings.HasPrefix(basename,".") {
+				continue
+			}
 			name := strings.TrimSuffix(basename, filepath.Ext(basename))
 			s := load(name)
 			if s != nil {
