@@ -4,6 +4,8 @@ import (
 	"github.com/gimke/trailer/git"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -11,8 +13,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"net/http"
-	"net/url"
 )
 
 type worker struct {
@@ -154,32 +154,35 @@ func (s *service) processGit(client git.Client) {
 	//get content from remote git
 	var (
 		preVersion string
-		version string
-		zip     string
+		version    string
+		zip        string
+		doPayload  = true
 	)
 	c, err := client.GetConfig()
 	defer func() {
-		payload := s.Config.Deployment.Payload
-		if s.Config.Deployment.Payload != "" {
-			//Payload callback
-			data := url.Values{}
-			if err != nil {
-				data.Add("status","failed")
-				data.Add("error",err.Error())
-			} else {
-				data.Add("status","success")
-				data.Add("preVersion",preVersion)
-				data.Add("version",version)
-			}
-			resp,err := http.PostForm(payload,data)
-			if err != nil {
-				Logger.Error("%s payload:%s error: %v", s.Name,payload, err)
-			}
-			resultData, _ := ioutil.ReadAll(resp.Body)
-			if resp.StatusCode == 200 {
-				Logger.Error("%s payload:%s success: %s", s.Name,payload, string(resultData))
-			} else {
-				Logger.Error("%s payload:%s error: %s", s.Name,payload, string(resultData))
+		if doPayload {
+			payload := s.Config.Deployment.Payload
+			if s.Config.Deployment.Payload != "" {
+				//Payload callback
+				data := url.Values{}
+				if err != nil {
+					data.Add("status", "failed")
+					data.Add("error", err.Error())
+				} else {
+					data.Add("status", "success")
+					data.Add("preVersion", preVersion)
+					data.Add("version", version)
+				}
+				resp, err := http.PostForm(payload, data)
+				if err != nil {
+					Logger.Error("%s payload:%s error: %v", s.Name, payload, err)
+				}
+				resultData, _ := ioutil.ReadAll(resp.Body)
+				if resp.StatusCode == 200 {
+					Logger.Error("%s payload:%s success: %s", s.Name, payload, string(resultData))
+				} else {
+					Logger.Error("%s payload:%s error: %s", s.Name, payload, string(resultData))
+				}
 			}
 		}
 	}()
@@ -210,6 +213,7 @@ func (s *service) processGit(client git.Client) {
 	//check local version
 	preVersion = s.GetVersion()
 	if preVersion == version {
+		doPayload = false
 		return
 	}
 
