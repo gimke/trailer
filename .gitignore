@@ -3,6 +3,7 @@ logs/
 run/
 services/*
 !services/cartdemo.yaml
+!services/trailer.yaml
 home/
 vendor/*
 !vendor/vendor.json

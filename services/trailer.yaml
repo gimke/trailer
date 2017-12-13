@@ -1,0 +1,8 @@
+name: trailer
+
+command:
+  - ./trailer
+  - -daemon
+
+pid_file: ./run/trailer.pid
+grace: true
