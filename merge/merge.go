@@ -78,7 +78,7 @@ func deeper(dst, src reflect.Value, visited map[uintptr]*visit, depth int) (err 
 		// Remember, remember...
 		visited[h] = &visit{addr, typ, seen}
 	}
-	return // TODO refactor
+	return
 }
 func hasExportedField(dst reflect.Value) (exported bool) {
 	for i, n := 0, dst.NumField(); i < n; i++ {
