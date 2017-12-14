@@ -13,6 +13,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"runtime/debug"
 )
 
 type worker struct {
@@ -134,6 +135,11 @@ func (s *service) KeepAlive() {
 
 //update
 func (s *service) Update() {
+	defer func() {
+		if err := recover(); err != nil {
+			Logger.Error("[Recovery] panic recovered:%s\n%s",err,string(debug.Stack()))
+		}
+	}()
 	if pid := s.GetPid(); pid != 0 || !s.IsExist() {
 		if s.Config.Deployment != nil && s.Config.Deployment.Type != "" {
 			var client git.Client
