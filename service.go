@@ -10,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"github.com/gimke/trailer/merge"
 )
 
 type services []*service
@@ -23,23 +24,23 @@ type config struct {
 	Name    string
 	Env     []string
 	Command []string
-	PidFile string `yaml:"pid_file"`
+	PidFile string `yaml:"pid_file,omitempty"`
 
-	StdOutFile string `yaml:"std_out_file"`
-	StdErrFile string `yaml:"std_err_file"`
-	Grace      bool   `yaml:"grace"`
-	RunAtLoad  bool   `yaml:"run_at_load"`
-	KeepAlive  bool   `yaml:"keep_alive"`
+	StdOutFile string `yaml:"std_out_file,omitempty"`
+	StdErrFile string `yaml:"std_err_file,omitempty"`
+	Grace      bool   `yaml:"grace,omitempty"`
+	RunAtLoad  bool   `yaml:"run_at_load,omitempty"`
+	KeepAlive  bool   `yaml:"keep_alive,omitempty"`
 
-	Deployment *deployment
+	Deployment *deployment `yaml:"deployment,omitempty"`
 }
 
 type deployment struct {
-	Type       string `yaml:"type"`
-	Token      string `yaml:"token"`
-	Repository string `yaml:"repository"`
-	Version    string `yaml:"version"`
-	Payload    string `yaml:"payload"`
+	Type       string `yaml:"type,omitempty"`
+	Token      string `yaml:"token,omitempty"`
+	Repository string `yaml:"repository,omitempty"`
+	Version    string `yaml:"version,omitempty"`
+	Payload    string `yaml:"payload,omitempty"`
 }
 
 func newServices() *services {
@@ -48,15 +49,25 @@ func newServices() *services {
 
 func load(name string) *service {
 	file := binPath + "/services/" + name + ".yaml"
-	if isExist(file) {
-		c, _ := ioutil.ReadFile(file)
-		var config = &config{}
-		err := yaml.Unmarshal(c, &config)
-		if err == nil {
-			return &service{Name: config.Name, Config: config}
-		}
+	if !isExist(file) {
+		return nil
 	}
-	return nil
+	content, _ := ioutil.ReadFile(file)
+	var c = &config{}
+	err := yaml.Unmarshal(content, &c)
+	if err != nil {
+		return nil
+	}
+	//load protect yaml
+	protectFile := binPath + "/services/" + name + ".overwrite.yaml"
+	if isExist(file) {
+		content, _ := ioutil.ReadFile(protectFile)
+		var pc = &config{}
+		err = yaml.Unmarshal(content, &pc)
+		merge.Merge(pc,c)
+		c = pc
+	}
+	return &service{Name: c.Name, Config: c}
 }
 
 func (ss *services) GetList() {
@@ -65,6 +76,9 @@ func (ss *services) GetList() {
 		for _, file := range files {
 			basename := file.Name()
 			if strings.HasPrefix(basename, ".") {
+				continue
+			}
+			if strings.HasSuffix(basename, ".overwrite.yaml") {
 				continue
 			}
 			name := strings.TrimSuffix(basename, filepath.Ext(basename))
