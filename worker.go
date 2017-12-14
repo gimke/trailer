@@ -100,7 +100,7 @@ func (w *worker) Monitor(s *service) {
 		latency := time.Now().Sub(start)
 		Logger.Info("%s process time %v", s.Name, latency)
 		//check shouldQuit
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 60; i++ {
 			select {
 			case <- shouldQuit:
 				w.wg.Done()
@@ -225,26 +225,21 @@ func (s *service) processGit(client git.Client) {
 	file := dir + "/update/" + version + ".zip"
 
 	//Termination download when shouldQuit close
-	var quitLoop = make(chan bool,1)
+	var quitLoop = make(chan bool)
 	go func() {
 		for {
 			select {
 			case <- quitLoop:
-				Logger.Info("%s Download success",s.Name)
 				return
 			case <- shouldQuit:
 				client.Termination()
-				Logger.Info("%s Termination download",s.Name)
+				Logger.Info("%s termination download",s.Name)
 				return
-			default:
-				Logger.Info("%s loop",s.Name)
-				time.Sleep(time.Second)
 			}
 		}
 	}()
 	err = client.DownloadFile(file, zip)
-	Logger.Info("%s download done %v",s.Name,err)
-	quitLoop <- true
+	close(quitLoop)
 
 	if err != nil {
 		Logger.Error("%s update download error %v", s.Name, err)
