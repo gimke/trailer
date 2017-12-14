@@ -10,6 +10,7 @@ import (
 	"strings"
 	"archive/zip"
 	"io"
+	"regexp"
 )
 
 const (
@@ -21,6 +22,8 @@ const (
 	format  = "%-40s%s\n"
 	success = green + "[  OK  ]" + reset
 	failed  = red + "[FAILED]" + reset
+	branch = "branch"
+	release = "release"
 )
 
 var (
@@ -170,6 +173,17 @@ func unzip(src, dest string) error {
 	return nil
 }
 
+func versionType(version string) string {
+	if version == "latest" {
+		return release
+	}
+	var validTag = regexp.MustCompile(`^v(\d+\.)?(\d+\.)?(\*|\d+)$`)
+	if validTag.MatchString(version) {
+		return release
+	}
+	return branch
+	//return branch
+}
 const (
 	configText = `name: trailer
 

@@ -14,17 +14,17 @@ keep_alive: false
 #  type: github (only support github gitlab)
 #  token: Personal access tokens (visit https://github.com/settings/tokens and generate a new token)
 #  repository: repository address (https://github.com/gimke/cartdemo)
-#  version: release:latest, release:v1.0.3, branch:master or branch:other_branch
+#  version: release: latest or v1.0.3, branch: master or other_branch
 #  payload: payload url when update success
 
 #  type: gitlab (only support github gitlab)
 #  token: Personal access tokens (visit https://gitlab.com/profile/personal_access_tokens and generate a new token)
 #  repository: repository address (https://gitlab.com/gimke/cartdemo)
-#  version: release:latest, release:v1.0.3, branch:master or branch:other_branch
+#  version: release: latest or v1.0.3, branch: master or other_branch
 #  payload: payload url when update success
 
 deployment:
   type: github
   repository: https://github.com/gimke/cartdemo
-  version: branch:master
+  version: master
   payload: http://localhost:8080/payload

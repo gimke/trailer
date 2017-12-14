@@ -13,7 +13,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"qiniupkg.com/x/errors.v7"
 )
 
 type worker struct {
@@ -200,12 +199,11 @@ func (s *service) processGit(client git.Client) {
 		Logger.Error("%s get config error: %v", s.Name, err)
 		return
 	}
-	arr := strings.Split(remoteConfig.Deployment.Version, ":")
-
-	if arr[0] == "release" {
-		version, zip, err = client.GetRelease(arr[1])
-	} else if arr[0] == "branch" {
-		version, zip, err = client.GetBranche(arr[1])
+	t := versionType(remoteConfig.Deployment.Version)
+	if t == release {
+		version, zip, err = client.GetRelease(remoteConfig.Deployment.Version)
+	} else if t == branch {
+		version, zip, err = client.GetBranche(remoteConfig.Deployment.Version)
 	}
 	if err != nil {
 		Logger.Error("%s find version error: %v", s.Name, err)
