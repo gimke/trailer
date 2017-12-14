@@ -26,5 +26,5 @@ keep_alive: false
 deployment:
   type: github
   repository: https://github.com/gimke/cartdemo
-  version: latest
+  version: master
   payload: http://localhost:8080/payload
