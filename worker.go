@@ -9,17 +9,17 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
-	"runtime/debug"
 )
 
 type worker struct {
-	wg         sync.WaitGroup
-	runed      bool
-	done      chan bool
+	wg    sync.WaitGroup
+	runed bool
+	done  chan bool
 	*services
 }
 
@@ -90,26 +90,30 @@ func (w *worker) Quit() {
 	<-w.done
 	Quit <- true
 }
+func loop(s *service) {
+	start := time.Now()
 
+	s.KeepAlive()
+	s.Update()
+
+	latency := time.Now().Sub(start)
+	Logger.Info("%s process time %v", s.Name, latency)
+	timer := time.NewTimer(10 * time.Second)
+	select {
+	case <-timer.C:
+		go func() {
+			loop(s)
+		}()
+	case <-shouldQuit:
+		return
+	}
+}
 func (w *worker) Monitor(s *service) {
-	for {
-		start := time.Now()
-
-		s.KeepAlive()
-		s.Update()
-
-		latency := time.Now().Sub(start)
-		Logger.Info("%s process time %v", s.Name, latency)
-		//check shouldQuit
-		for i := 0; i < 60; i++ {
-			select {
-			case <- shouldQuit:
-				w.wg.Done()
-				return
-			default:
-				time.Sleep(time.Second)
-			}
-		}
+	loop(s)
+	select {
+	case <-shouldQuit:
+		w.wg.Done()
+		return
 	}
 }
 
@@ -137,7 +141,7 @@ func (s *service) KeepAlive() {
 func (s *service) Update() {
 	defer func() {
 		if err := recover(); err != nil {
-			Logger.Error("[Recovery] panic recovered:%s\n%s",err,string(debug.Stack()))
+			Logger.Error("[Recovery] panic recovered:%s\n%s", err, string(debug.Stack()))
 		}
 	}()
 	if pid := s.GetPid(); pid != 0 || !s.IsExist() {
@@ -234,11 +238,11 @@ func (s *service) processGit(client git.Client) {
 	go func() {
 		for {
 			select {
-			case <- quitLoop:
+			case <-quitLoop:
 				return
-			case <- shouldQuit:
+			case <-shouldQuit:
 				client.Termination()
-				Logger.Info("%s termination download",s.Name)
+				Logger.Info("%s termination download", s.Name)
 				return
 			}
 		}
