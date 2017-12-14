@@ -37,12 +37,12 @@ func GithubClient(token, repo string) Client {
 }
 
 func (g *Github) Request(method, url string) (string, error) {
-	client := &http.Client{}
+	c := &http.Client{}
 	req, _ := http.NewRequest(method, url, nil)
 	if g.Token != "" {
 		req.Header.Set("Authorization", "token "+g.Token)
 	}
-	resp, err := client.Do(req)
+	resp, err := c.Do(req)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -128,12 +128,13 @@ func (g *Github) DownloadFile(file, url string) error {
 	os.MkdirAll(dir, 0755)
 
 	// Get the data
-	client := &http.Client{}
+	tr := &http.Transport{} // TODO: copy defaults from http.DefaultTransport
+	c := &http.Client{Transport: tr}
 	req, _ := http.NewRequest("GET", url, nil)
 	if g.Token != "" {
 		req.Header.Set("Authorization", "token "+g.Token)
 	}
-	resp, err := client.Do(req)
+	resp, err := c.Do(req)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
