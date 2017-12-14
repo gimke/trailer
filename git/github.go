@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"os"
 	"io"
+	"context"
 )
 
 var _ Client = &Github{}
@@ -36,30 +37,48 @@ func GithubClient(token, repo string) Client {
 	return &Github{Token: token, Repository: repo}
 }
 
+var cancel context.CancelFunc
+var ctx context.Context
 func (g *Github) Request(method, url string) (string, error) {
 	c := &http.Client{}
+	ctx, cancel = context.WithCancel(context.Background())
 	req, _ := http.NewRequest(method, url, nil)
+	req = req.WithContext(ctx)
 	if g.Token != "" {
 		req.Header.Set("Authorization", "token "+g.Token)
 	}
-	resp, err := c.Do(req)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-	if err != nil {
-		return "", err
-	} else {
-		data, _ := ioutil.ReadAll(resp.Body)
-		if resp.StatusCode == 200 {
-			//success
-			if err == nil {
-				return string(data), nil
-			} else {
-				return "", err
-			}
-		} else {
-			return "", errors.New(string(data))
+
+	var resp *http.Response
+	var err error
+	success := make(chan bool)
+
+	go func() {
+		resp, err = c.Do(req)
+		success <- true
+	}()
+
+	select {
+	case <-success:
+		if resp != nil {
+			defer resp.Body.Close()
 		}
+		if err != nil {
+			return "", err
+		} else {
+			data, _ := ioutil.ReadAll(resp.Body)
+			if resp.StatusCode == 200 {
+				//success
+				if err == nil {
+					return string(data), nil
+				} else {
+					return "", err
+				}
+			} else {
+				return "", errors.New(string(data))
+			}
+		}
+	case <-ctx.Done():
+		return "",ctx.Err()
 	}
 }
 
@@ -163,4 +182,7 @@ func (g *Github) DownloadFile(file, url string) error {
 
 func (g *Github) Termination() {
 	//Termination download
+	if cancel != nil {
+		cancel()
+	}
 }

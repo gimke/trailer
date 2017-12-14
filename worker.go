@@ -224,7 +224,21 @@ func (s *service) processGit(client git.Client) {
 	//download zip file and unzip
 	dir, _ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
 	file := dir + "/update/" + version + ".zip"
+	stop := false
+	go func() {
+		for{
+			if stop {
+				break
+			}
+			if shouldQuit {
+				client.Termination()
+				break
+			}
+			time.Sleep(time.Second)
+		}
+	}()
 	err = client.DownloadFile(file, zip)
+	stop = true
 	if err != nil {
 		Logger.Error("%s update download error %v", s.Name, err)
 		return
