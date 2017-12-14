@@ -37,48 +37,29 @@ func GithubClient(token, repo string) Client {
 	return &Github{Token: token, Repository: repo}
 }
 
-var cancel context.CancelFunc
-var ctx context.Context
 func (g *Github) Request(method, url string) (string, error) {
-	c := &http.Client{}
-	ctx, cancel = context.WithCancel(context.Background())
 	req, _ := http.NewRequest(method, url, nil)
-	req = req.WithContext(ctx)
 	if g.Token != "" {
 		req.Header.Set("Authorization", "token "+g.Token)
 	}
-
-	var resp *http.Response
-	var err error
-	success := make(chan bool)
-
-	go func() {
-		resp, err = c.Do(req)
-		success <- true
-	}()
-
-	select {
-	case <-success:
-		if resp != nil {
-			defer resp.Body.Close()
-		}
-		if err != nil {
-			return "", err
-		} else {
-			data, _ := ioutil.ReadAll(resp.Body)
-			if resp.StatusCode == 200 {
-				//success
-				if err == nil {
-					return string(data), nil
-				} else {
-					return "", err
-				}
+	resp, err := http.DefaultClient.Do(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return "", err
+	} else {
+		data, _ := ioutil.ReadAll(resp.Body)
+		if resp.StatusCode == 200 {
+			//success
+			if err == nil {
+				return string(data), nil
 			} else {
-				return "", errors.New(string(data))
+				return "", err
 			}
+		} else {
+			return "", errors.New(string(data))
 		}
-	case <-ctx.Done():
-		return "",ctx.Err()
 	}
 }
 
@@ -141,48 +122,70 @@ func (g *Github) GetBranche(branche string) (string, string, error) {
 	return version, zip, nil
 
 }
+
+
+var (
+	cx context.Context
+	cancel context.CancelFunc
+)
+
 func (g *Github) DownloadFile(file, url string) error {
 	// Create the file
 	dir := filepath.Dir(file)
 	os.MkdirAll(dir, 0755)
 
 	// Get the data
-	tr := &http.Transport{} // TODO: copy defaults from http.DefaultTransport
-	c := &http.Client{Transport: tr}
+	cx,cancel = context.WithCancel(context.Background())
 	req, _ := http.NewRequest("GET", url, nil)
+	req = req.WithContext(cx)
 	if g.Token != "" {
 		req.Header.Set("Authorization", "token "+g.Token)
 	}
-	resp, err := c.Do(req)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-	if err != nil {
-		return err
-	}
 
-	if resp.StatusCode == 200 {
-		// Writer the body to file
-		out, err := os.Create(file)
+	done := make(chan bool)
+
+	var err error
+	var resp *http.Response
+	go func() {
+		resp, err = http.DefaultClient.Do(req)
+		done <- true
+	}()
+
+	select {
+	case <-done:
+		if resp != nil {
+			defer resp.Body.Close()
+		}
 		if err != nil {
 			return err
 		}
-		defer out.Close()
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
-			os.Remove(file)
-			return err
+
+		if resp.StatusCode == 200 {
+			// Writer the body to file
+			out, err := os.Create(file)
+			if err != nil {
+				return err
+			}
+			defer out.Close()
+			_, err = io.Copy(out, resp.Body)
+			if err != nil {
+				os.Remove(file)
+				return err
+			}
+		} else {
+			data, _ := ioutil.ReadAll(resp.Body)
+			return errors.New(string(data))
 		}
-	} else {
-		data, _ := ioutil.ReadAll(resp.Body)
-		return errors.New(string(data))
+	case <-cx.Done():
+		//canceled
+		return cx.Err()
 	}
 	return nil
 }
 
 func (g *Github) Termination() {
 	//Termination download
-	if cancel != nil {
+	if cancel!= nil {
 		cancel()
 	}
 }

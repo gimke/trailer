@@ -16,16 +16,15 @@ import (
 )
 
 type worker struct {
-	wg    sync.WaitGroup
-	runed bool
-	ended chan bool
+	wg         sync.WaitGroup
+	runed      bool
+	done      chan bool
 	*services
 }
 
 func (w *worker) Work() {
-	if w.ended == nil {
-		w.ended = make(chan bool)
-	}
+	w.done = make(chan bool)
+
 	s := load(name)
 	if s.GetPid() != 0 {
 		Logger.Error(ErrAlreadyRunning.Error())
@@ -59,9 +58,9 @@ func (w *worker) Work() {
 
 func (w *worker) Do() {
 	defer func() {
-		shouldQuit = false
+		shouldQuit = make(chan bool)
 		w.runed = true
-		w.ended <- true
+		w.done <- true
 	}()
 	w.LoadServices()
 	Logger.Info("Service load services")
@@ -80,16 +79,17 @@ func (w *worker) LoadServices() {
 	w.services.GetList()
 }
 func (w *worker) ReLoad() {
-	shouldQuit = true
-	<-w.ended
+	close(shouldQuit)
+	<-w.done
 	Quit <- false
 }
 
 func (w *worker) Quit() {
-	shouldQuit = true
-	<-w.ended
+	close(shouldQuit)
+	<-w.done
 	Quit <- true
 }
+
 func (w *worker) Monitor(s *service) {
 	for {
 		start := time.Now()
@@ -100,15 +100,14 @@ func (w *worker) Monitor(s *service) {
 		latency := time.Now().Sub(start)
 		Logger.Info("%s process time %v", s.Name, latency)
 		//check shouldQuit
-		for i := 0; i < 60; i++ {
-			if shouldQuit {
-				break
+		for i := 0; i < 10; i++ {
+			select {
+			case <- shouldQuit:
+				w.wg.Done()
+				return
+			default:
+				time.Sleep(time.Second)
 			}
-			time.Sleep(time.Second)
-		}
-		if shouldQuit {
-			w.wg.Done()
-			break
 		}
 	}
 }
@@ -165,7 +164,7 @@ func (s *service) processGit(client git.Client) {
 			if s.Config.Deployment.Payload != "" {
 				//Payload callback
 				data := url.Values{}
-				hostName,_:= os.Hostname()
+				hostName, _ := os.Hostname()
 				data.Add("hostName", hostName)
 				data.Add("name", s.Name)
 				if err != nil {
@@ -224,21 +223,25 @@ func (s *service) processGit(client git.Client) {
 	//download zip file and unzip
 	dir, _ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
 	file := dir + "/update/" + version + ".zip"
-	stop := false
+
+	//Termination download when shouldQuit close
+	quitLoop := make(chan bool)
 	go func() {
-		for{
-			if stop {
-				break
-			}
-			if shouldQuit {
+		for {
+			select {
+			case <- quitLoop:
+				return
+			case <- shouldQuit:
 				client.Termination()
-				break
+				return
+			default:
+				time.Sleep(time.Second)
 			}
-			time.Sleep(time.Second)
 		}
 	}()
 	err = client.DownloadFile(file, zip)
-	stop = true
+	quitLoop <- true
+
 	if err != nil {
 		Logger.Error("%s update download error %v", s.Name, err)
 		return

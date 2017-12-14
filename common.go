@@ -32,7 +32,7 @@ var (
 	listFlag    bool
 	versionFlag bool
 	daemonFlag  bool
-	shouldQuit  = false
+	shouldQuit  = make(chan bool)
 	Quit        = make(chan bool)
 
 	Logger = cartlog.New()
