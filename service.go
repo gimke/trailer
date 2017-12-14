@@ -59,7 +59,7 @@ func load(name string) *service {
 		return nil
 	}
 	//load protect yaml
-	protectFile := binPath + "/services/" + name + ".overwrite.yaml"
+	protectFile := binPath + "/services/" + name + ".private.yaml"
 	if isExist(file) {
 		content, _ := ioutil.ReadFile(protectFile)
 		var pc = &config{}
@@ -78,7 +78,7 @@ func (ss *services) GetList() {
 			if strings.HasPrefix(basename, ".") {
 				continue
 			}
-			if strings.HasSuffix(basename, ".overwrite.yaml") {
+			if strings.HasSuffix(basename, ".private.yaml") {
 				continue
 			}
 			name := strings.TrimSuffix(basename, filepath.Ext(basename))

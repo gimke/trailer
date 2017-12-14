@@ -13,6 +13,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"qiniupkg.com/x/errors.v7"
 )
 
 type worker struct {
