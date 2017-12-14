@@ -225,21 +225,25 @@ func (s *service) processGit(client git.Client) {
 	file := dir + "/update/" + version + ".zip"
 
 	//Termination download when shouldQuit close
-	quitLoop := make(chan bool)
+	var quitLoop = make(chan bool,1)
 	go func() {
 		for {
 			select {
 			case <- quitLoop:
+				Logger.Info("%s Download success",s.Name)
 				return
 			case <- shouldQuit:
 				client.Termination()
+				Logger.Info("%s Termination download",s.Name)
 				return
 			default:
+				Logger.Info("%s loop",s.Name)
 				time.Sleep(time.Second)
 			}
 		}
 	}()
 	err = client.DownloadFile(file, zip)
+	Logger.Info("%s download done %v",s.Name,err)
 	quitLoop <- true
 
 	if err != nil {
