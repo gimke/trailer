@@ -38,7 +38,7 @@ var (
 	shouldQuit  = make(chan bool)
 	Quit        = make(chan bool)
 
-	Logger = cartlog.New()
+	Logger = cartlog.FileSystem("./logs/" + name)
 
 	ErrAlreadyRunning = errors.New("Service is already running")
 	ErrAlreadyStopped = errors.New("Service has already been stopped")
@@ -56,7 +56,6 @@ func init() {
 		dir, _ = os.Getwd()
 	}
 	binPath, _ = filepath.Abs(dir)
-	cartlog.FileSystem("./logs/" + name)
 	initService()
 }
 
