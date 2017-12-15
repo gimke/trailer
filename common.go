@@ -10,7 +10,6 @@ import (
 	"strings"
 	"archive/zip"
 	"io"
-	"regexp"
 )
 
 const (
