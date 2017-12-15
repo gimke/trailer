@@ -1,16 +1,16 @@
 package git
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"os"
-	"io"
-	"context"
+	"path/filepath"
 )
 
 var _ Client = &Github{}
@@ -23,8 +23,9 @@ var _ Client = &Github{}
 //  payload: payload url when update success
 
 type Github struct {
-	Token      string
-	Repository string
+	Token       string
+	Repository  string
+	Version string
 }
 
 func (g *Github) getUrl() string {
@@ -32,8 +33,8 @@ func (g *Github) getUrl() string {
 	return u.Scheme + "://api." + u.Host + "/repos" + u.Path
 }
 
-func GithubClient(token, repo string) Client {
-	return &Github{Token: token, Repository: repo}
+func GithubClient(token, repo, version string) Client {
+	return &Github{Token: token, Repository: repo, Version: version}
 }
 
 func (g *Github) Request(method, url string) (string, error) {
@@ -62,9 +63,12 @@ func (g *Github) Request(method, url string) (string, error) {
 	}
 }
 
-func (g *Github) GetConfig() (string, error) {
+func (g *Github) GetConfigFile() (string, error) {
 	u := g.getUrl()
 	u += "/contents/trailer.yaml"
+	if versionType(g.Version) == branch {
+		u+="?ref="+url.PathEscape(g.Version)
+	}
 	data, err := g.Request("GET", u)
 	if err != nil {
 		return "", err
@@ -79,9 +83,18 @@ func (g *Github) GetConfig() (string, error) {
 	return content, nil
 }
 
-func (g *Github) GetRelease(tag string) (string, string, error) {
+func (g *Github) GetVersion() (string, string, error) {
+	if versionType(g.Version) == branch {
+		return g.GetBranche()
+	} else {
+		return g.GetRelease()
+	}
+}
+
+func (g *Github) GetRelease() (string, string, error) {
 	//latest or tag name
 	u := g.getUrl()
+	tag := g.Version
 	if tag == "latest" {
 		u += "/releases/" + tag
 	} else {
@@ -101,11 +114,11 @@ func (g *Github) GetRelease(tag string) (string, string, error) {
 	return version, zip, nil
 }
 
-func (g *Github) GetBranche(branche string) (string, string, error) {
+func (g *Github) GetBranche() (string, string, error) {
 	u := g.getUrl()
+	branche := g.Version
 	u += "/branches/" + branche
-
-	zip := g.getUrl()+"/zipball/"+branche
+	zip := g.getUrl() + "/zipball/" + branche
 
 	data, err := g.Request("GET", u)
 	if err != nil {
@@ -122,9 +135,8 @@ func (g *Github) GetBranche(branche string) (string, string, error) {
 
 }
 
-
 var (
-	cx context.Context
+	cx     context.Context
 	cancel context.CancelFunc
 )
 
@@ -134,7 +146,7 @@ func (g *Github) DownloadFile(file, url string) error {
 	os.MkdirAll(dir, 0755)
 
 	// Get the data
-	cx,cancel = context.WithCancel(context.Background())
+	cx, cancel = context.WithCancel(context.Background())
 	req, _ := http.NewRequest("GET", url, nil)
 	req = req.WithContext(cx)
 	if g.Token != "" {
@@ -184,7 +196,7 @@ func (g *Github) DownloadFile(file, url string) error {
 
 func (g *Github) Termination() {
 	//Termination download
-	if cancel!= nil {
+	if cancel != nil {
 		cancel()
 	}
 }
