@@ -28,7 +28,6 @@ type Github struct {
 }
 
 func (g *Github) getUrl() string {
-	//https://github.com/gimke/cartdemo
 	u, _ := url.Parse(g.Repository)
 	return u.Scheme + "://api." + u.Host + "/repos" + u.Path
 }

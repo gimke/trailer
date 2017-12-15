@@ -7,7 +7,7 @@ command:
 
 pid_file: ./home/cartdemo/cartdemo.pid
 grace: true
-run_at_load: true
+run_at_load: false
 keep_alive: false
 
 #deployment:
