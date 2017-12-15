@@ -154,7 +154,9 @@ func (s *service) Update() {
 				//case "gitlab":
 				//	client = &git.Gitlab{}
 			}
-			s.processGit(client)
+			if client!=nil {
+				s.processGit(client)
+			}
 		}
 	}
 }

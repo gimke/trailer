@@ -1,7 +1,7 @@
 .idea/
 logs/
 run/
-services/*
+services/*.yaml
 !services/cartdemo.yaml
 !services/trailer.yaml
 home/
