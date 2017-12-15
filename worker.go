@@ -98,7 +98,7 @@ func loop(s *service) {
 
 	latency := time.Now().Sub(start)
 	Logger.Info("%s process time %v", s.Name, latency)
-	timer := time.NewTimer(10 * time.Second)
+	timer := time.NewTimer(60 * time.Second)
 	select {
 	case <-timer.C:
 		go func() {
