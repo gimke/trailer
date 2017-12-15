@@ -146,10 +146,6 @@ func (s *service) Update() {
 	}()
 	if pid := s.GetPid(); pid != 0 || !s.IsExist() {
 		if s.Config.Deployment != nil && s.Config.Deployment.Type != "" {
-			t := versionType(s.Config.Deployment.Version)
-			if t == release {
-			} else if t == branch {
-			}
 			var client git.Client
 			switch strings.ToLower(s.Config.Deployment.Type) {
 			case "github":
