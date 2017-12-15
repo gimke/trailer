@@ -6,9 +6,7 @@ import (
 )
 
 /*
-todo 1,增加 tok 文件 保存 token 解决 github public 重启 退出 时 取消正在运行的下载任务 done
-todo 2,增加gitlab的支持  增加recover处理错误
-
+todo 1,增加gitlab的支持
 */
 
 func main() {
