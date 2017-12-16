@@ -23,8 +23,9 @@ var _ Client = &Github{}
 //  payload: payload url when update success
 
 type Github struct {
-	Token         string
-	Repository    string
+	Token      string
+	Repository string
+	d          *download
 }
 
 func (g *Github) getUrl() string {
@@ -64,7 +65,7 @@ func (g *Github) Request(method, url string) (string, error) {
 
 func (g *Github) GetConfigFile(branch string) (string, error) {
 	u := g.getUrl()
-	u += "/contents/.trailer.yml"+"?ref="+url.PathEscape(branch)
+	u += "/contents/.trailer.yml" + "?ref=" + url.PathEscape(branch)
 	data, err := g.Request("GET", u)
 	if err != nil {
 		return "", err
@@ -123,68 +124,15 @@ func (g *Github) GetBranch(branch string) (string, string, error) {
 
 }
 
-var (
-	cx     context.Context
-	cancel context.CancelFunc
-)
-
 func (g *Github) DownloadFile(file, url string) error {
-	// Create the file
-	dir := filepath.Dir(file)
-	os.MkdirAll(dir, 0755)
-
-	// Get the data
-	cx, cancel = context.WithCancel(context.Background())
-	req, _ := http.NewRequest("GET", url, nil)
-	req = req.WithContext(cx)
-	if g.Token != "" {
-		req.Header.Set("Authorization", "token "+g.Token)
-	}
-
-	done := make(chan bool)
-
-	var err error
-	var resp *http.Response
-	go func() {
-		resp, err = http.DefaultClient.Do(req)
-		done <- true
-	}()
-
-	select {
-	case <-done:
-		if resp != nil {
-			defer resp.Body.Close()
-		}
-		if err != nil {
-			return err
-		}
-
-		if resp.StatusCode == 200 {
-			// Writer the body to file
-			out, err := os.Create(file)
-			if err != nil {
-				return err
-			}
-			defer out.Close()
-			_, err = io.Copy(out, resp.Body)
-			if err != nil {
-				os.Remove(file)
-				return err
-			}
-		} else {
-			data, _ := ioutil.ReadAll(resp.Body)
-			return errors.New(string(data))
-		}
-	case <-cx.Done():
-		//canceled
-		return cx.Err()
-	}
-	return nil
+	header := "Authorization: token " + g.Token
+	g.d = &download{}
+	return g.d.downloadFile(header, file, url)
 }
 
 func (g *Github) Termination() {
 	//Termination download
-	if cancel != nil {
-		cancel()
+	if g.d != nil && g.d.cancel != nil {
+		g.d.cancel()
 	}
 }
