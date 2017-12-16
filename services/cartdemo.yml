@@ -7,7 +7,7 @@ command:
 
 pid_file: ./home/cartdemo/cartdemo.pid
 grace: true
-run_at_load: false
+run_at_load: true
 keep_alive: false
 
 #deployment:
@@ -26,5 +26,5 @@ keep_alive: false
 deploy:
   type: github
   repository: https://github.com/gimke/cartdemo
-  version: master
+  version: latest
   payload: http://localhost:8080/payload
