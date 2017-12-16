@@ -32,10 +32,10 @@ type config struct {
 	RunAtLoad  bool   `yaml:"run_at_load,omitempty"`
 	KeepAlive  bool   `yaml:"keep_alive,omitempty"`
 
-	Deployment *deployment `yaml:"deployment,omitempty"`
+	Deploy *deploy `yaml:"deploy,omitempty"`
 }
 
-type deployment struct {
+type deploy struct {
 	Type       string `yaml:"type,omitempty"`
 	Token      string `yaml:"token,omitempty"`
 	Repository string `yaml:"repository,omitempty"`
@@ -154,6 +154,26 @@ func (s *service) Stop() error {
 		<-quitStop
 		if s.Config.PidFile == "" {
 			s.RemovePid()
+		}
+	}
+	return nil
+}
+func (s *service) RestartForce() error {
+	pid := s.GetPid()
+	if pid != 0 {
+		err := s.Stop()
+		if err != nil {
+			return err
+		} else {
+			err = s.Start()
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := s.Start()
+		if err != nil {
+			return err
 		}
 	}
 	return nil

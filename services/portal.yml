@@ -8,10 +8,10 @@ command:
 
 pid_file: ./home/portal/portal.pid
 grace: true
-run_at_load: true
+run_at_load: false
 keep_alive: false
 
-deployment:
+deploy:
   type: gitlab
   repository: https://gitlab.com/gimke/portalbuild
   version: darwin

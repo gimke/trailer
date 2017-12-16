@@ -16,7 +16,6 @@ var _ Client = &Gitlab{}
 type Gitlab struct {
 	Token       string
 	Repository  string
-	Version 	string
 }
 
 func (g *Gitlab) getUrl() string {
@@ -24,8 +23,8 @@ func (g *Gitlab) getUrl() string {
 	return u.Scheme + "://" + u.Host + "/api/v4/projects/" + url.PathEscape(strings.TrimPrefix(u.Path, "/"))
 }
 
-func GitlabClient(token, repo, version string) Client {
-	return &Gitlab{Token: token, Repository: repo, Version: version}
+func GitlabClient(token, repo string) Client {
+	return &Gitlab{Token: token, Repository: repo}
 }
 
 func (g *Gitlab) Request(method, url string) (string, error) {
@@ -54,14 +53,10 @@ func (g *Gitlab) Request(method, url string) (string, error) {
 	}
 }
 
-func (g *Gitlab) GetConfigFile() (string, error) {
+func (g *Gitlab) GetConfigFile(branch string) (string, error) {
 	u := g.getUrl()
 	fmt.Println(u)
-	u += "/repository/files/.trailer.yml"
-	if versionType(g.Version) == branch {
-		u+="?ref="+url.PathEscape(g.Version)
-	}
-	fmt.Println(u)
+	u += "/repository/files/.trailer.yml?ref="+url.PathEscape(branch)
 	data, err := g.Request("GET", u)
 	if err != nil {
 		return "", err
@@ -77,19 +72,12 @@ func (g *Gitlab) GetConfigFile() (string, error) {
 	return content, nil
 }
 
-func (g *Gitlab) GetVersion() (string, string, error) {
-	if versionType(g.Version) == branch {
-		return g.GetBranche()
-	} else {
-		return g.GetRelease()
-	}
-}
 
-func (g *Gitlab) GetRelease() (string, string, error) {
+func (g *Gitlab) GetRelease(release string) (string, string, error) {
 	return "", "", nil
 }
 
-func (g *Gitlab) GetBranche() (string, string, error) {
+func (g *Gitlab) GetBranch(branch string) (string, string, error) {
 	return "", "", nil
 }
 

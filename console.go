@@ -38,7 +38,7 @@ func (c *console) List() {
 		}
 		autoUpdate := "N"
 		autoUpdateColor := red
-		if s.Config.Deployment != nil {
+		if s.Config.Deploy != nil {
 			autoUpdate = "Y"
 			ver := s.GetVersion()
 			if ver != "" {

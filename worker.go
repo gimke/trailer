@@ -145,14 +145,15 @@ func (s *service) Update() {
 		}
 	}()
 	if pid := s.GetPid(); pid != 0 || !s.IsExist() {
-		if s.Config.Deployment != nil && s.Config.Deployment.Type != "" {
+		deploy := s.Config.Deploy
+		if deploy != nil && deploy.Type != "" {
 			var client git.Client
-			switch strings.ToLower(s.Config.Deployment.Type) {
+			switch strings.ToLower(deploy.Type) {
 			case "github":
-				client = git.GithubClient(s.Config.Deployment.Token, s.Config.Deployment.Repository, s.Config.Deployment.Version)
+				client = git.GithubClient(deploy.Token, deploy.Repository)
 				break
 			case "gitlab":
-				client = git.GitlabClient(s.Config.Deployment.Token, s.Config.Deployment.Repository, s.Config.Deployment.Version)
+				client = git.GitlabClient(deploy.Token, deploy.Repository)
 			}
 			if client != nil {
 				s.processGit(client)
@@ -168,12 +169,13 @@ func (s *service) processGit(client git.Client) {
 		version    string
 		zip        string
 		doPayload  = true
+		err        error
 	)
-	c, err := client.GetConfigFile()
+
 	defer func() {
 		if doPayload {
-			payload := s.Config.Deployment.Payload
-			if s.Config.Deployment.Payload != "" {
+			payload := s.Config.Deploy.Payload
+			if payload != "" {
 				//Payload callback
 				data := url.Values{}
 				hostName, _ := os.Hostname()
@@ -200,24 +202,36 @@ func (s *service) processGit(client git.Client) {
 			}
 		}
 	}()
+	deploy := s.Config.Deploy
+	t := versionType(deploy.Version)
+	targetBranch := ""
+	if t == release {
+		//version, zip, err = client.GetRelease(remoteConfig.Deployment.Version)
+		//get config from master if is release
+		targetBranch = "master"
+	} else if t == branch {
+		//version, zip, err = client.GetBranche(remoteConfig.Deployment.Version)
+		//get config from branch name if is branch
+		targetBranch = deploy.Version
+	}
+	c, err := client.GetConfigFile(targetBranch)
 	if err != nil {
 		Logger.Error("%s get config error: %v", s.Name, err)
 		return
 	}
-
 	remoteConfig := &config{}
 	err = yaml.Unmarshal([]byte(c), &remoteConfig)
 	if err != nil {
 		Logger.Error("%s get config error: %v", s.Name, err)
 		return
 	}
-	version, zip, err = client.GetVersion()
-	//t := versionType(remoteConfig.Deployment.Version)
-	//if t == release {
-	//	version, zip, err = client.GetRelease(remoteConfig.Deployment.Version)
-	//} else if t == branch {
-	//	version, zip, err = client.GetBranche(remoteConfig.Deployment.Version)
-	//}
+	//get raw version from remote config
+	t = versionType(remoteConfig.Deploy.Version)
+	if t == release {
+		version, zip, err = client.GetRelease(remoteConfig.Deploy.Version)
+	} else if t == branch {
+		version, zip, err = client.GetBranch(remoteConfig.Deploy.Version)
+	}
 	if err != nil {
 		Logger.Error("%s find version error: %v", s.Name, err)
 		return
@@ -291,15 +305,7 @@ func (s *service) updateService(content, version string) error {
 		rude = true
 	}
 	if rude {
-		err := s.Stop()
-		if err != nil {
-			return err
-		} else {
-			err = s.Start()
-			if err != nil {
-				return err
-			}
-		}
+		s.RestartForce()
 	} else {
 		s.Restart()
 	}

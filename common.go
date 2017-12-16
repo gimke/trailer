@@ -10,6 +10,7 @@ import (
 	"archive/zip"
 	"io"
 	"github.com/gimke/cart/logger"
+	"regexp"
 )
 
 const (
@@ -169,6 +170,21 @@ func unzip(src, dest string) error {
 		}
 	}
 	return nil
+}
+
+const branch = "branch"
+const release = "release"
+
+func versionType(version string) string {
+	if version == "latest" {
+		return release
+	}
+	var validTag = regexp.MustCompile(`^v(\d+\.)?(\d+\.)?(\*|\d+)$`)
+	if validTag.MatchString(version) {
+		return release
+	}
+	return branch
+	//return branch
 }
 
 const (

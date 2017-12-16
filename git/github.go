@@ -23,9 +23,8 @@ var _ Client = &Github{}
 //  payload: payload url when update success
 
 type Github struct {
-	Token       string
-	Repository  string
-	Version string
+	Token         string
+	Repository    string
 }
 
 func (g *Github) getUrl() string {
@@ -33,8 +32,8 @@ func (g *Github) getUrl() string {
 	return u.Scheme + "://api." + u.Host + "/repos" + u.Path
 }
 
-func GithubClient(token, repo, version string) Client {
-	return &Github{Token: token, Repository: repo, Version: version}
+func GithubClient(token, repo string) Client {
+	return &Github{Token: token, Repository: repo}
 }
 
 func (g *Github) Request(method, url string) (string, error) {
@@ -63,12 +62,9 @@ func (g *Github) Request(method, url string) (string, error) {
 	}
 }
 
-func (g *Github) GetConfigFile() (string, error) {
+func (g *Github) GetConfigFile(branch string) (string, error) {
 	u := g.getUrl()
-	u += "/contents/.trailer.yml"
-	if versionType(g.Version) == branch {
-		u+="?ref="+url.PathEscape(g.Version)
-	}
+	u += "/contents/.trailer.yml"+"?ref="+url.PathEscape(branch)
 	data, err := g.Request("GET", u)
 	if err != nil {
 		return "", err
@@ -83,22 +79,14 @@ func (g *Github) GetConfigFile() (string, error) {
 	return content, nil
 }
 
-func (g *Github) GetVersion() (string, string, error) {
-	if versionType(g.Version) == branch {
-		return g.GetBranche()
-	} else {
-		return g.GetRelease()
-	}
-}
-
-func (g *Github) GetRelease() (string, string, error) {
+func (g *Github) GetRelease(release string) (string, string, error) {
 	//latest or tag name
 	u := g.getUrl()
-	tag := g.Version
-	if tag == "latest" {
-		u += "/releases/" + tag
+	//tag := g.Version
+	if release == "latest" {
+		u += "/releases/" + release
 	} else {
-		u += "/releases/tags/" + tag
+		u += "/releases/tags/" + release
 	}
 	data, err := g.Request("GET", u)
 	if err != nil {
@@ -114,11 +102,11 @@ func (g *Github) GetRelease() (string, string, error) {
 	return version, zip, nil
 }
 
-func (g *Github) GetBranche() (string, string, error) {
+func (g *Github) GetBranch(branch string) (string, string, error) {
 	u := g.getUrl()
-	branche := g.Version
-	u += "/branches/" + branche
-	zip := g.getUrl() + "/zipball/" + branche
+	//branche := g.Version
+	u += "/branches/" + branch
+	zip := g.getUrl() + "/zipball/" + branch
 
 	data, err := g.Request("GET", u)
 	if err != nil {
