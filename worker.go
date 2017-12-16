@@ -167,7 +167,7 @@ func (s *service) processGit(client git.Client) {
 	var (
 		preVersion string
 		version    string
-		zip        string
+		asset        string
 		doPayload  = true
 		err        error
 	)
@@ -206,11 +206,9 @@ func (s *service) processGit(client git.Client) {
 	t := versionType(deploy.Version)
 	targetBranch := ""
 	if t == release {
-		//version, zip, err = client.GetRelease(remoteConfig.Deployment.Version)
 		//get config from master if is release
 		targetBranch = "master"
 	} else if t == branch {
-		//version, zip, err = client.GetBranche(remoteConfig.Deployment.Version)
 		//get config from branch name if is branch
 		targetBranch = deploy.Version
 	}
@@ -228,15 +226,15 @@ func (s *service) processGit(client git.Client) {
 	//get raw version from remote config
 	t = versionType(remoteConfig.Deploy.Version)
 	if t == release {
-		version, zip, err = client.GetRelease(remoteConfig.Deploy.Version)
+		version, asset, err = client.GetRelease(remoteConfig.Deploy.Version)
 	} else if t == branch {
-		version, zip, err = client.GetBranch(remoteConfig.Deploy.Version)
+		version, asset, err = client.GetBranch(remoteConfig.Deploy.Version)
 	}
 	if err != nil {
 		Logger.Error("%s find version error: %v", s.Name, err)
 		return
 	}
-	Logger.Info("%s find version:%s zip:%s", s.Name, version, zip)
+	Logger.Info("%s find version:%s asset:%s", s.Name, version, asset)
 
 	//check local version
 	preVersion = s.GetVersion()
@@ -264,7 +262,7 @@ func (s *service) processGit(client git.Client) {
 			}
 		}
 	}()
-	err = client.DownloadFile(file, zip)
+	err = client.DownloadFile(file, asset)
 	close(quitLoop)
 
 	if err != nil {

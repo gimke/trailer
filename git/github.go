@@ -98,15 +98,15 @@ func (g *Github) GetRelease(release string) (string, string, error) {
 		return "", "", err
 	}
 	version := jsonData["name"].(string)
-	zip := jsonData["zipball_url"].(string)
-	return version, zip, nil
+	asset := jsonData["zipball_url"].(string)
+	return version, asset, nil
 }
 
 func (g *Github) GetBranch(branch string) (string, string, error) {
 	u := g.getUrl()
 	//branche := g.Version
 	u += "/branches/" + branch
-	zip := g.getUrl() + "/zipball/" + branch
+	asset := g.getUrl() + "/zipball/" + branch
 
 	data, err := g.Request("GET", u)
 	if err != nil {
@@ -119,7 +119,7 @@ func (g *Github) GetBranch(branch string) (string, string, error) {
 	}
 	version := jsonData["commit"].(map[string]interface{})["sha"].(string)
 
-	return version, zip, nil
+	return version, asset, nil
 
 }
 
