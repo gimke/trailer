@@ -65,7 +65,7 @@ func (g *Github) Request(method, url string) (string, error) {
 
 func (g *Github) GetConfigFile() (string, error) {
 	u := g.getUrl()
-	u += "/contents/trailer.yaml"
+	u += "/contents/.trailer.yml"
 	if versionType(g.Version) == branch {
 		u+="?ref="+url.PathEscape(g.Version)
 	}

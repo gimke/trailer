@@ -48,7 +48,7 @@ func newServices() *services {
 }
 
 func load(name string) *service {
-	file := binPath + "/services/" + name + ".yaml"
+	file := binPath + "/services/" + name + ".yml"
 	if !isExist(file) {
 		return nil
 	}
@@ -59,7 +59,7 @@ func load(name string) *service {
 		return nil
 	}
 	//load protect yaml
-	protectFile := binPath + "/services/" + name + ".private.yaml"
+	protectFile := binPath + "/services/" + name + ".private.yml"
 	if isExist(file) {
 		content, _ := ioutil.ReadFile(protectFile)
 		var pc = &config{}
@@ -78,7 +78,7 @@ func (ss *services) GetList() {
 			if strings.HasPrefix(basename, ".") {
 				continue
 			}
-			if strings.HasSuffix(basename, ".private.yaml") {
+			if strings.HasSuffix(basename, ".private.yml") {
 				continue
 			}
 			name := strings.TrimSuffix(basename, filepath.Ext(basename))

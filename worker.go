@@ -271,7 +271,7 @@ func (s *service) processGit(client git.Client) {
 }
 
 func (s *service) updateService(content, version string) error {
-	p := binPath + "/services/" + s.Name + ".yaml"
+	p := binPath + "/services/" + s.Name + ".yml"
 	c := []byte(content)
 	err := ioutil.WriteFile(p, c, 0666)
 	if err != nil {

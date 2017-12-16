@@ -40,14 +40,18 @@ func (c *console) List() {
 		autoUpdateColor := red
 		if s.Config.Deployment != nil {
 			autoUpdate = "Y"
-			if s.Config.Deployment.Version != "" {
-				autoUpdate = "Y" + "[" + s.GetVersion() + "]"
+			ver := s.GetVersion()
+			if ver != "" {
+				if len(ver) > 8 {
+					ver = ver[0:5]+"..."
+				}
+				autoUpdate = "Y" + " " + ver + ""
 			}
 			autoUpdateColor = green
 		}
 		pidString := "-"
 		if !s.IsExist() {
-			running = "NOTEXIST"
+			running = "NONE"
 		}
 		if pid := s.GetPid(); pid != 0 {
 			running = "RUNNING"

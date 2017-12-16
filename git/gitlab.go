@@ -57,7 +57,7 @@ func (g *Gitlab) Request(method, url string) (string, error) {
 func (g *Gitlab) GetConfigFile() (string, error) {
 	u := g.getUrl()
 	fmt.Println(u)
-	u += "/repository/files/trailer.yaml"
+	u += "/repository/files/.trailer.yml"
 	if versionType(g.Version) == branch {
 		u+="?ref="+url.PathEscape(g.Version)
 	}

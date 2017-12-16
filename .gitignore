@@ -1,9 +1,9 @@
 .idea/
 logs/
 run/
-services/*.yaml
-!services/cartdemo.yaml
-!services/trailer.yaml
+services/*.yml
+!services/cartdemo.yml
+!services/trailer.yml
 home/
 vendor/*
 !vendor/vendor.json

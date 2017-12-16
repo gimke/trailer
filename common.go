@@ -3,13 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/gimke/cartlog"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"archive/zip"
 	"io"
+	"github.com/gimke/cart/logger"
 )
 
 const (
@@ -35,7 +35,7 @@ var (
 	shouldQuit  = make(chan bool)
 	Quit        = make(chan bool)
 
-	Logger = cartlog.FileSystem("./logs/" + name)
+	Logger = logger.Logger
 
 	ErrAlreadyRunning = errors.New("Service is already running")
 	ErrAlreadyStopped = errors.New("Service has already been stopped")
@@ -43,6 +43,8 @@ var (
 )
 
 func init() {
+	logger.SetFileOutput("./logs/trailer")
+
 	bin := filepath.Base(os.Args[0])
 	dir := ""
 	if bin == name {
@@ -57,7 +59,7 @@ func init() {
 }
 
 func initService() {
-	file := binPath + "/services/" + name + ".yaml"
+	file := binPath + "/services/" + name + ".yml"
 	if !isExist(file) {
 		os.MkdirAll(binPath+"/services", 0755)
 		data := []byte(configText)
