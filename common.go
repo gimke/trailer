@@ -232,6 +232,8 @@ name: demo
 
 command:
   - ping
+  - -c
+  - 3
   - 192.168.1.1
 
 run_at_load: true
