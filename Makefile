@@ -19,12 +19,12 @@ all: clean linux darwin
 
 linux:
 	cd ${BUILD_DIR}; \
-	GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/linux/${BINARY}-${VERSION} . ; \
+	GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/linux-${VERSION}/${BINARY} . ; \
 	cd - >/dev/null
 
 darwin:
 	cd ${BUILD_DIR}; \
-	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/darwin/${BINARY}-${VERSION} . ; \
+	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/darwin-${VERSION}/${BINARY} . ; \
 	cd - >/dev/null
 
 #windows:
