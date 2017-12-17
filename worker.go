@@ -224,10 +224,6 @@ func (s *service) processGit(client git.Client) {
 		version, asset, err = client.GetRelease(version)
 		break
 	}
-	//if t == release {
-	//	version, asset, err = client.GetRelease(config.Deploy.Version)
-	//} else if t == branch {
-	//}
 	if err != nil {
 		Logger.Error("%s find version error: %v", s.Name, err)
 		return
@@ -280,18 +276,3 @@ func (s *service) processGit(client git.Client) {
 		Logger.Info("%s update service success preVersion:%s newVersion:%s", s.Name, preVersion, version)
 	}
 }
-
-//func (s *service) updateService(version string) error {
-//	//p := binPath + "/services/" + s.Name + ".yml"
-//	//c := []byte(content)
-//	//err := ioutil.WriteFile(p, c, 0666)
-//	//if err != nil {
-//	//	return err
-//	//}
-//	s.SetVersion(version)
-//	//check if command changes
-//
-//	s.Restart()
-//
-//	return nil
-//}
