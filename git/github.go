@@ -95,6 +95,9 @@ func (g *Github) GetRelease(release string) (string, string, error) {
 		return "", "", err
 	}
 	version := jsonData["name"].(string)
+	if version == "" {
+		version = jsonData["tag_name"].(string)
+	}
 	asset := jsonData["zipball_url"].(string)
 	return version, asset, nil
 }
