@@ -1,7 +1,7 @@
 BINARY = trailer
 GOARCH = amd64
 
-VERSION?=?
+VERSION = v1.0.0
 COMMIT=$(shell git rev-parse HEAD)
 BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 
@@ -19,12 +19,12 @@ all: clean linux darwin
 
 linux:
 	cd ${BUILD_DIR}; \
-	GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/linux/${BINARY} . ; \
+	GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/linux/${BINARY}-${VERSION} . ; \
 	cd - >/dev/null
 
 darwin:
 	cd ${BUILD_DIR}; \
-	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/darwin/${BINARY} . ; \
+	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/darwin/${BINARY}-${VERSION} . ; \
 	cd - >/dev/null
 
 #windows:
