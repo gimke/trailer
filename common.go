@@ -14,7 +14,7 @@ import (
 
 const (
 	name    = "trailer"
-	version = "1.0.2"
+	version = "1.0.0"
 	reset   = "\033[0m"
 	red     = "\033[31;1m"
 	green   = "\033[32;1m"
