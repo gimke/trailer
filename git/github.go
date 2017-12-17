@@ -59,9 +59,9 @@ func (g *Github) Request(method, url string) (string, error) {
 	}
 }
 
-func (g *Github) GetConfigFile(branch string) (string, error) {
+func (g *Github) GetContentFile(branch, file string) (string, error) {
 	u := g.getUrl()
-	u += "/contents/.trailer.yml" + "?ref=" + url.PathEscape(branch)
+	u += "/contents/" + file + "?ref=" + url.PathEscape(branch)
 	data, err := g.Request("GET", u)
 	if err != nil {
 		return "", err

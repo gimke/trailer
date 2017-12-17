@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/gimke/trailer/git"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -146,9 +145,9 @@ func (s *service) Update() {
 	}()
 	if pid := s.GetPid(); pid != 0 || !s.IsExist() {
 		deploy := s.Config.Deploy
-		if deploy != nil && deploy.Type != "" {
+		if deploy != nil && deploy.Provider != "" {
 			var client git.Client
-			switch strings.ToLower(deploy.Type) {
+			switch strings.ToLower(deploy.Provider) {
 			case "github":
 				client = git.GithubClient(deploy.Token, deploy.Repository)
 				break
@@ -167,7 +166,7 @@ func (s *service) processGit(client git.Client) {
 	var (
 		preVersion string
 		version    string
-		asset        string
+		asset      string
 		doPayload  = true
 		err        error
 	)
@@ -202,34 +201,49 @@ func (s *service) processGit(client git.Client) {
 			}
 		}
 	}()
-	deploy := s.Config.Deploy
-	t := versionType(deploy.Version)
-	targetBranch := ""
-	if t == release {
-		//get config from master if is release
-		targetBranch = "master"
-	} else if t == branch {
-		//get config from branch name if is branch
-		targetBranch = deploy.Version
-	}
-	c, err := client.GetConfigFile(targetBranch)
-	if err != nil {
-		Logger.Error("%s get config error: %v", s.Name, err)
-		return
-	}
-	remoteConfig := &config{}
-	err = yaml.Unmarshal([]byte(c), &remoteConfig)
-	if err != nil {
-		Logger.Error("%s get config error: %v", s.Name, err)
-		return
-	}
+	config := s.Config
+	t := versionType(config.Deploy.Version)
+	//targetBranch := ""
+	//if t == release {
+	//	//get config from master if is release
+	//	targetBranch = "master"
+	//} else if t == branch {
+	//	//get config from branch name if is branch
+	//	targetBranch = deploy.Version
+	//}
+	//c, err := client.GetConfigFile(targetBranch)
+	//if err != nil {
+	//	Logger.Error("%s get config error: %v", s.Name, err)
+	//	return
+	//}
+	//remoteConfig := &config{}
+	//err = yaml.Unmarshal([]byte(c), &remoteConfig)
+	//if err != nil {
+	//	Logger.Error("%s get config error: %v", s.Name, err)
+	//	return
+	//}
 	//get raw version from remote config
-	t = versionType(remoteConfig.Deploy.Version)
-	if t == release {
-		version, asset, err = client.GetRelease(remoteConfig.Deploy.Version)
-	} else if t == branch {
-		version, asset, err = client.GetBranch(remoteConfig.Deploy.Version)
+	//t = versionType(remoteConfig.Deploy.Version)
+	switch t {
+	case branch:
+		version, asset, err = client.GetBranch(config.Deploy.Version)
+		break
+	case latest:
+		version, asset, err = client.GetRelease(config.Deploy.Version)
+		break
+	case release:
+		arr := strings.Split(config.Deploy.Version, ":")
+		version, err = client.GetContentFile(arr[0], strings.Join(arr[1:], ":"))
+		if err != nil {
+			Logger.Error("%s get file error: %v", s.Name, err)
+		}
+		version, asset, err = client.GetRelease(version)
+		break
 	}
+	//if t == release {
+	//	version, asset, err = client.GetRelease(config.Deploy.Version)
+	//} else if t == branch {
+	//}
 	if err != nil {
 		Logger.Error("%s find version error: %v", s.Name, err)
 		return
@@ -245,8 +259,8 @@ func (s *service) processGit(client git.Client) {
 	}
 
 	//download zip file and unzip
-	dir, _ := filepath.Abs(filepath.Dir(remoteConfig.Command[0]))
-	file := dir + "/update/" + version + ".zip"
+	dir, _ := filepath.Abs(filepath.Dir(config.Command[0]))
+	file := binPath + "/update/"+s.Name+"/" + version + ".zip"
 
 	//Termination download when shouldQuit close
 	var quitLoop = make(chan bool)
@@ -274,38 +288,26 @@ func (s *service) processGit(client git.Client) {
 		Logger.Error("%s update unzip file error %v", s.Name, err)
 		return
 	}
-	err = s.updateService(c, version)
-	if err != nil {
-		Logger.Error("%s update service error %v", s.Name, err)
-		return
-	}
-	Logger.Info("%s update service success preVersion:%s newVersion:%s", s.Name, preVersion, version)
-}
-
-func (s *service) updateService(content, version string) error {
-	p := binPath + "/services/" + s.Name + ".yml"
-	c := []byte(content)
-	err := ioutil.WriteFile(p, c, 0666)
-	if err != nil {
-		return err
-	}
 	s.SetVersion(version)
-	//check if command changes
-	rude := false
-	tobeupdate := load(s.Name)
-
-	if strings.Join(tobeupdate.Config.Env, "") == strings.Join(s.Config.Env, "") &&
-		strings.Join(tobeupdate.Config.Command, "") == strings.Join(s.Config.Command, "") {
-		s.Config = tobeupdate.Config
-		rude = false
+	err = s.Restart()
+	if err != nil {
+		Logger.Error("%s restart service error %v", s.Name, err)
 	} else {
-		s.Config = tobeupdate.Config
-		rude = true
+		Logger.Info("%s update service success preVersion:%s newVersion:%s", s.Name, preVersion, version)
 	}
-	if rude {
-		s.RestartForce()
-	} else {
-		s.Restart()
-	}
-	return nil
 }
+
+//func (s *service) updateService(version string) error {
+//	//p := binPath + "/services/" + s.Name + ".yml"
+//	//c := []byte(content)
+//	//err := ioutil.WriteFile(p, c, 0666)
+//	//if err != nil {
+//	//	return err
+//	//}
+//	s.SetVersion(version)
+//	//check if command changes
+//
+//	s.Restart()
+//
+//	return nil
+//}

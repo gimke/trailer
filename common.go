@@ -10,7 +10,6 @@ import (
 	"archive/zip"
 	"io"
 	"github.com/gimke/cart/logger"
-	"regexp"
 )
 
 const (
@@ -174,13 +173,13 @@ func unzip(src, dest string) error {
 
 const branch = "branch"
 const release = "release"
+const latest = "latest"
 
 func versionType(version string) string {
 	if version == "latest" {
-		return release
+		return latest
 	}
-	var validTag = regexp.MustCompile(`^v(\d+\.)?(\d+\.)?(\*|\d+)$`)
-	if validTag.MatchString(version) {
+	if strings.Contains(version,":") {
 		return release
 	}
 	return branch

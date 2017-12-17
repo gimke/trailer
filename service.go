@@ -10,7 +10,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"github.com/gimke/trailer/merge"
 )
 
 type services []*service
@@ -36,7 +35,7 @@ type config struct {
 }
 
 type deploy struct {
-	Type       string `yaml:"type,omitempty"`
+	Provider       string `yaml:"provider,omitempty"`
 	Token      string `yaml:"token,omitempty"`
 	Repository string `yaml:"repository,omitempty"`
 	Version    string `yaml:"version,omitempty"`
@@ -58,15 +57,7 @@ func load(name string) *service {
 	if err != nil {
 		return nil
 	}
-	//load protect yaml
-	protectFile := binPath + "/services/" + name + ".private.yml"
-	if isExist(file) {
-		content, _ := ioutil.ReadFile(protectFile)
-		var pc = &config{}
-		err = yaml.Unmarshal(content, &pc)
-		merge.Merge(pc,c)
-		c = pc
-	}
+
 	return &service{Name: c.Name, Config: c}
 }
 

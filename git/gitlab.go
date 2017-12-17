@@ -53,10 +53,10 @@ func (g *Gitlab) Request(method, url string) (string, error) {
 	}
 }
 
-func (g *Gitlab) GetConfigFile(branch string) (string, error) {
+func (g *Gitlab) GetContentFile(branch, file string) (string, error) {
 	u := g.getUrl()
 	fmt.Println(u)
-	u += "/files/.trailer.yml?ref=" + url.PathEscape(branch)
+	u += "/files/"+url.PathEscape(file)+"?ref=" + url.PathEscape(branch)
 	data, err := g.Request("GET", u)
 	if err != nil {
 		return "", err
