@@ -191,39 +191,19 @@ func (s *service) processGit(client git.Client) {
 				resp, err := http.PostForm(payload, data)
 				if err != nil {
 					Logger.Error("%s payload:%s error: %v", s.Name, payload, err)
-				}
-				resultData, _ := ioutil.ReadAll(resp.Body)
-				if resp.StatusCode == 200 {
-					Logger.Info("%s payload:%s success: %s", s.Name, payload, string(resultData))
 				} else {
-					Logger.Error("%s payload:%s error: %s", s.Name, payload, string(resultData))
+					resultData, _ := ioutil.ReadAll(resp.Body)
+					if resp.StatusCode == 200 {
+						Logger.Info("%s payload:%s success: %s", s.Name, payload, string(resultData))
+					} else {
+						Logger.Error("%s payload:%s error: %s", s.Name, payload, string(resultData))
+					}
 				}
 			}
 		}
 	}()
 	config := s.Config
 	t := versionType(config.Deploy.Version)
-	//targetBranch := ""
-	//if t == release {
-	//	//get config from master if is release
-	//	targetBranch = "master"
-	//} else if t == branch {
-	//	//get config from branch name if is branch
-	//	targetBranch = deploy.Version
-	//}
-	//c, err := client.GetConfigFile(targetBranch)
-	//if err != nil {
-	//	Logger.Error("%s get config error: %v", s.Name, err)
-	//	return
-	//}
-	//remoteConfig := &config{}
-	//err = yaml.Unmarshal([]byte(c), &remoteConfig)
-	//if err != nil {
-	//	Logger.Error("%s get config error: %v", s.Name, err)
-	//	return
-	//}
-	//get raw version from remote config
-	//t = versionType(remoteConfig.Deploy.Version)
 	switch t {
 	case branch:
 		version, asset, err = client.GetBranch(config.Deploy.Version)
@@ -234,6 +214,10 @@ func (s *service) processGit(client git.Client) {
 	case release:
 		arr := strings.Split(config.Deploy.Version, ":")
 		version, err = client.GetContentFile(arr[0], strings.Join(arr[1:], ":"))
+		version = strings.TrimSpace(version)
+		version = strings.Trim(version,"\n")
+		version = strings.Trim(version,"\r")
+
 		if err != nil {
 			Logger.Error("%s get file error: %v", s.Name, err)
 		}
