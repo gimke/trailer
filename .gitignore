@@ -2,7 +2,6 @@
 logs/
 run/
 /services/*
-!services/cartdemo.yml
 !services/trailer.yml
 home/
 vendor/*

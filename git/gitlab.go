@@ -76,7 +76,7 @@ func (g *Gitlab) GetRelease(release string) (string, string, error) {
 	u := g.getUrl()
 	//tag := g.Version
 	if release == "latest" {
-		u += "/tags/" + release
+		u += "/tags"
 	} else {
 		u += "/tags/" + release
 	}
