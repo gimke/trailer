@@ -12,7 +12,7 @@ CURRENT_DIR=$(shell pwd)
 BUILD_DIR_LINK=$(shell readlink ${BUILD_DIR})
 
 # Setup the -ldflags option for go build here, interpolate the variable values
-LDFLAGS = -ldflags "-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH}"
+LDFLAGS = -ldflags "-X main.VERSION=${VERSION}"
 
 # Build the project
 all: clean linux darwin
@@ -38,7 +38,7 @@ fmt:
 	cd - >/dev/null
 
 clean:
-	-rm -rf ./build/linux/*
-	-rm -rf ./build/darwin/*
+	-rm -rf ./build/linux-${VERSION}/*
+	-rm -rf ./build/darwin-${VERSION}/*
 
 .PHONY: link linux darwin windows test vet fmt clean

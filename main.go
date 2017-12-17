@@ -29,7 +29,7 @@ func main() {
 	c := &console{}
 
 	if versionFlag {
-		fmt.Println(version)
+		fmt.Println(VERSION)
 		return
 	}
 
