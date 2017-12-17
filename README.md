@@ -8,9 +8,6 @@
 go get -u -d github.com/gimke/trailer
 cd ~/go/src/github.com/gimke/trailer
 go build
-cd demo
-go build
-cd ..
 ./trailer -s
 ./trailer -l
 ```
@@ -52,48 +49,32 @@ Usage of trailer:
 
 #### yaml
 ```yaml
-name: cartdemo
-env:
-  - CART_MODE=release
+#name: service name
+#env:
+#  - CART_MODE=release
 
-command:
-  - ./home/cartdemo/cartdemo
+#command:
+#  - ./home/cartdemo/cartdemo
 
-pid_file: ./home/cartdemo/cartdemo.pid
-grace: true
-run_at_load: true
-keep_alive: false
+#pid_file: ./home/cartdemo/cartdemo.pid
+#grace: true
+#run_at_load: false
+#keep_alive: false
 
-deployment:
-  config_headers:
-    - 'Accept: application/vnd.github.VERSION.raw'
-  config_path: https://api.github.com/repos/gimke/cartdemo/contents/trailer.yaml?ref=master
-  version: v1.0.3
-  zip: https://api.github.com/repos/gimke/cartdemo/zipball/{{version}}
-```
+#deploy:
+#  provider: github (only support github gitlab)
+#  token: Personal access tokens (visit https://github.com/settings/tokens or https://gitlab.com/profile/personal_access_tokens and generate a new token)
+#  repository: repository address (https://github.com/gimke/cartdemo)
+#  version: branchName (e.g master), latest release (e.g latest）or a release described in a file (e.g master:filepath/version.txt)
+#  payload: payload url when update success
 
-```yaml
-name: ping
-env:
-  - MY_ENV=hello
+name: demo
 
 command:
   - ping
-  - 192.168.3.1
-
-run_at_load: true
-keep_alive: false
-```
-
-```yaml
-name: demo
-env:
-  - MY_ENV=Test
-
-command:
-  - ./home/demo/demo
-
-pid_file: ./home/demo/demo.pid
+  - -c
+  - 3
+  - 192.168.1.1
 
 run_at_load: true
 keep_alive: false
