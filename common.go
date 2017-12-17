@@ -1,15 +1,15 @@
 package main
 
 import (
+	"archive/zip"
 	"errors"
 	"fmt"
+	"github.com/gimke/cart/logger"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-	"archive/zip"
-	"io"
-	"github.com/gimke/cart/logger"
 )
 
 const (
@@ -43,8 +43,6 @@ var (
 )
 
 func init() {
-	logger.SetFileOutput("./logs/trailer")
-
 	bin := filepath.Base(os.Args[0])
 	dir := ""
 	if bin == name {
@@ -55,6 +53,7 @@ func init() {
 		dir, _ = os.Getwd()
 	}
 	binPath, _ = filepath.Abs(dir)
+	logger.SetFileOutput(binPath + "/logs/trailer")
 	initService()
 }
 
@@ -62,8 +61,9 @@ func initService() {
 	file := binPath + "/services/" + name + ".yml"
 	if !isExist(file) {
 		os.MkdirAll(binPath+"/services", 0755)
-		data := []byte(configText)
-		ioutil.WriteFile(file, data, 0666)
+		ioutil.WriteFile(file, []byte(configText), 0666)
+		demoFile := binPath + "/services/demo.yml"
+		ioutil.WriteFile(demoFile, []byte(demoText), 0666)
 	}
 }
 
@@ -88,6 +88,18 @@ func makeFile(path string) *os.File {
 }
 
 func resovePath(path string) string {
+	if filepath.IsAbs(path) {
+		return path
+	} else {
+		if strings.HasPrefix(path, "."+string(os.PathSeparator)) {
+			return binPath + path[1:]
+		} else {
+			return binPath + "/" + path
+		}
+	}
+}
+
+func resoveCommand(path string) string {
 	if filepath.IsAbs(path) {
 		return path
 	} else {
@@ -179,7 +191,7 @@ func versionType(version string) string {
 	if version == "latest" {
 		return latest
 	}
-	if strings.Contains(version,":") {
+	if strings.Contains(version, ":") {
 		return release
 	}
 	return branch
@@ -187,13 +199,44 @@ func versionType(version string) string {
 }
 
 const (
-	configText = `name: trailer
+	configText = `#don't delete this file
+name: trailer
 
 command:
   - ./trailer
   - -daemon
 
+pid_file: ./run/trailer.pid
 grace: true
+`
+	demoText = `#name: service name
+#env:
+#  - CART_MODE=release
+
+#command:
+#  - ./home/cartdemo/cartdemo
+
+#pid_file: ./home/cartdemo/cartdemo.pid
+#grace: true
+#run_at_load: false
+#keep_alive: false
+
+#deploy:
+#  provider: github (only support github gitlab)
+#  token: Personal access tokens (visit https://github.com/settings/tokens or https://gitlab.com/profile/personal_access_tokens and generate a new token)
+#  repository: repository address (https://github.com/gimke/cartdemo)
+#  version: branchName (e.g master), latest release (e.g latest）or a release described in a file (e.g master:filepath/version.txt)
+#  payload: payload url when update success
+
+name: demo
+
+command:
+  - ping
+  - 192.168.1.1
+
+run_at_load: true
+keep_alive: false
+
 `
 
 	usageText = `Usage of trailer:

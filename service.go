@@ -35,7 +35,7 @@ type config struct {
 }
 
 type deploy struct {
-	Provider       string `yaml:"provider,omitempty"`
+	Provider   string `yaml:"provider,omitempty"`
 	Token      string `yaml:"token,omitempty"`
 	Repository string `yaml:"repository,omitempty"`
 	Version    string `yaml:"version,omitempty"`
@@ -85,7 +85,7 @@ func (s *service) Start() error {
 	if s.GetPid() != 0 {
 		return ErrAlreadyRunning
 	}
-	command := resovePath(s.Config.Command[0])
+	command := resoveCommand(s.Config.Command[0])
 	dir, _ := filepath.Abs(filepath.Dir(command))
 
 	cmd := exec.Command(command, s.Config.Command[1:]...)
@@ -95,14 +95,14 @@ func (s *service) Start() error {
 	cmd.Dir = dir
 
 	if s.Config.StdOutFile != "" {
-		out := makeFile(s.Config.StdOutFile)
+		out := makeFile(resovePath(s.Config.StdOutFile))
 		cmd.Stdout = out
 	} else {
 		out := makeFile(binPath + "/logs/" + s.Config.Name + "/stdout.log")
 		cmd.Stdout = out
 	}
 	if s.Config.StdErrFile != "" {
-		err := makeFile(s.Config.StdErrFile)
+		err := makeFile(resovePath(s.Config.StdErrFile))
 		cmd.Stderr = err
 	} else {
 		err := makeFile(binPath + "/logs/" + s.Config.Name + "/stderr.log")
@@ -198,7 +198,7 @@ func (s *service) Restart() error {
 }
 
 func (s *service) IsExist() bool {
-	command := resovePath(s.Config.Command[0])
+	command := resoveCommand(s.Config.Command[0])
 	if _, err := exec.LookPath(command); err == nil {
 		return true
 	}
@@ -245,7 +245,8 @@ func (s *service) RemovePid() error {
 
 func (s *service) pidFile() string {
 	if s.Config != nil && s.Config.PidFile != "" {
-		return s.Config.PidFile
+		pid := resovePath(s.Config.PidFile)
+		return pid
 	} else {
 		return binPath + "/run/" + s.Name + ".pid"
 	}
