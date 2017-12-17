@@ -1,16 +1,12 @@
 package git
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 )
 
 var _ Client = &Github{}

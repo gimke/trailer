@@ -1,18 +1,13 @@
 package git
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 var _ Client = &Gitlab{}
@@ -25,7 +20,7 @@ type Gitlab struct {
 
 func (g *Gitlab) getUrl() string {
 	u, _ := url.Parse(g.Repository)
-	return u.Scheme + "://" + u.Host + "/api/v4/projects/" + url.PathEscape(strings.TrimPrefix(u.Path, "/")) + "/repository"
+	return u.Scheme + "://" + u.Host + "/api/v4/projects/" + url.PathEscape(u.Path[1:]) + "/repository"
 }
 
 func GitlabClient(token, repo string) Client {
@@ -89,15 +84,33 @@ func (g *Gitlab) GetRelease(release string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	var jsonData map[string]interface{}
-	err = json.Unmarshal([]byte(data), &jsonData)
-	if err != nil {
-		return "", "", err
+	if release == "latest" {
+		var jsonData []map[string]interface{}
+		err = json.Unmarshal([]byte(data), &jsonData)
+		if err != nil {
+			return "", "", err
+		}
+		if len(jsonData) > 0 {
+			version := jsonData[0]["name"].(string)
+			sha := jsonData[0]["commit"].(map[string]interface{})["id"].(string)
+			asset := g.getUrl() + "/archive.zip?sha=" + sha
+			return version, asset, nil
+		} else {
+			return "", "", errors.New("not found")
+		}
+
+	} else {
+		var jsonData map[string]interface{}
+		err = json.Unmarshal([]byte(data), &jsonData)
+		if err != nil {
+			return "", "", err
+		}
+		version := jsonData["name"].(string)
+		sha := jsonData["commit"].(map[string]interface{})["id"].(string)
+		asset := g.getUrl() + "/archive.zip?sha=" + sha
+		return version, asset, nil
 	}
-	version := jsonData["name"].(string)
-	sha := jsonData["commit"].(map[string]interface{})["id"].(string)
-	asset := g.getUrl() + "/archive.zip?sha=" + sha
-	return version, asset, nil
+
 }
 
 func (g *Gitlab) GetBranch(branch string) (string, string, error) {
