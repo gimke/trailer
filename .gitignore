@@ -2,6 +2,7 @@
 logs/
 run/
 /services/*
+!services/ping.yml
 !services/trailer.yml
 home/
 vendor/*

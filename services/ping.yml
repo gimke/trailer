@@ -1,6 +1,4 @@
 name: ping
-env:
-  - MY_ENV=hello
 
 command:
   - ping
