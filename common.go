@@ -217,6 +217,8 @@ grace: true
 #  - ./home/cartdemo/cartdemo
 
 #pid_file: ./home/cartdemo/cartdemo.pid
+#std_out_file: ./home/cartdemo/logs/out.log
+#std_err_file: ./home/cartdemo/logs/err.log
 #grace: true
 #run_at_load: false
 #keep_alive: false
