@@ -4,6 +4,9 @@
 
 ### daemon
 
+get release file
+https://github.com/gimke/trailer/releases
+
 ```bash
 go get -u -d github.com/gimke/trailer
 cd ~/go/src/github.com/gimke/trailer
