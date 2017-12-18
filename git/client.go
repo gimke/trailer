@@ -2,13 +2,13 @@ package git
 
 import (
 	"context"
-	"path/filepath"
-	"os"
-	"net/http"
+	"errors"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
-	"errors"
 )
 
 type Client interface {
@@ -20,13 +20,12 @@ type Client interface {
 	Termination()
 }
 
-
 type download struct {
-	cx context.Context
+	cx     context.Context
 	cancel context.CancelFunc
 }
 
-func (d *download) downloadFile(header, file , url string) error {
+func (d *download) downloadFile(header, file, url string) error {
 	// Create the file
 	dir := filepath.Dir(file)
 	os.MkdirAll(dir, 0755)
@@ -36,7 +35,7 @@ func (d *download) downloadFile(header, file , url string) error {
 	req, _ := http.NewRequest("GET", url, nil)
 	req = req.WithContext(d.cx)
 	if header != "" {
-		arr := strings.Split(header,":")
+		arr := strings.Split(header, ":")
 		req.Header.Set(arr[0], strings.TrimSpace(arr[1]))
 	}
 

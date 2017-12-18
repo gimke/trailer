@@ -43,7 +43,7 @@ func (c *console) List() {
 			ver := s.GetVersion()
 			if ver != "" {
 				if len(ver) > 8 {
-					ver = ver[0:5]+"..."
+					ver = ver[0:5] + "..."
 				}
 				autoUpdate = "Y" + " " + ver + ""
 			}

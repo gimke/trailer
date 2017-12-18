@@ -24,7 +24,7 @@ const (
 
 var (
 	VERSION = "1.0.0"
-	BINDIR string
+	BINDIR  string
 	//flags
 	startFlag   bool
 	stopFlag    bool
@@ -51,7 +51,7 @@ func init() {
 	if filepath.Base(bin) == name {
 		BINDIR = filepath.Dir(bin)
 	} else {
-		BINDIR,_ = os.Getwd()
+		BINDIR, _ = os.Getwd()
 	}
 	logger.SetFileOutput(BINDIR + "/logs/trailer")
 	initService()
