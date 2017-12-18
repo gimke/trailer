@@ -1,7 +1,7 @@
 BINARY = trailer
 GOARCH = amd64
 
-VERSION = v1.0.0
+VERSION = $(shell cat .ver)
 COMMIT=$(shell git rev-parse HEAD)
 BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 
@@ -18,14 +18,16 @@ LDFLAGS = -ldflags "-X main.VERSION=${VERSION}"
 all: clean linux darwin
 
 linux:
-	cd ${BUILD_DIR}; \
-	GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/linux-${VERSION}/${BINARY} . ; \
-	cd - >/dev/null
+	@cd ${BUILD_DIR}
+	@GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/linux-${VERSION}/${BINARY} .
+	@/bin/echo -n "${VERSION}" > ./build/linux-${VERSION}/.ver
+	@echo "\033[32;1mBuild linux Done \033[0m"
 
 darwin:
-	cd ${BUILD_DIR}; \
-	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/darwin-${VERSION}/${BINARY} . ; \
-	cd - >/dev/null
+	@cd ${BUILD_DIR}
+	@GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/darwin-${VERSION}/${BINARY} .
+	@/bin/echo -n "${VERSION}" > ./build/darwin-${VERSION}/.ver
+	@echo "\033[32;1mBuild darwin Done \033[0m"
 
 #windows:
 #	cd ${BUILD_DIR}; \
@@ -33,10 +35,9 @@ darwin:
 #	cd - >/dev/null
 
 fmt:
-	cd ${BUILD_DIR}; \
-	go fmt $$(go list ./... | grep -v /vendor/) ; \
-	cd - >/dev/null
+	@cd ${BUILD_DIR}
+	@go fmt $$(go list ./... | grep -v /vendor/)
 
 clean:
-	-rm -rf ./build/linux-${VERSION}/*
-	-rm -rf ./build/darwin-${VERSION}/*
+	@rm -rf ./build/linux-${VERSION}/*
+	@rm -rf ./build/darwin-${VERSION}/*
