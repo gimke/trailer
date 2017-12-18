@@ -26,7 +26,11 @@ type Github struct {
 
 func (g *Github) getUrl() string {
 	u, _ := url.Parse(g.Repository)
-	return u.Scheme + "://api." + u.Host + "/repos" + u.Path
+	if u.Host == "github.com" {
+		return u.Scheme + "://api." + u.Host + "/repos" + u.Path
+	} else {
+		return u.Scheme + "://" + u.Host + "/api/v3/repos" + u.Path
+	}
 }
 
 func GithubClient(token, repo string) Client {
