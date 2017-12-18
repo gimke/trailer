@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/gimke/trailer/git"
 	"io/ioutil"
 	"net/http"
@@ -173,30 +174,34 @@ func (s *service) processGit(client git.Client) {
 
 	defer func() {
 		if doPayload {
-			payload := s.Config.Deploy.Payload
-			if payload != "" {
+			payloadUrl := s.Config.Deploy.Payload
+			if payloadUrl != "" {
 				//Payload callback
 				data := url.Values{}
 				hostName, _ := os.Hostname()
-				data.Add("hostName", hostName)
-				data.Add("name", s.Name)
-				if err != nil {
-					data.Add("status", "failed")
-					data.Add("error", err.Error())
-				} else {
-					data.Add("status", "success")
-					data.Add("preVersion", preVersion)
-					data.Add("version", version)
+				jsons := map[string]interface{}{
+					"hostName": hostName,
+					"name":     s.Name,
 				}
-				resp, err := http.PostForm(payload, data)
 				if err != nil {
-					Logger.Error("%s payload:%s error: %v", s.Name, payload, err)
+					jsons["status"] = "failed"
+					jsons["error"] = err.Error()
+				} else {
+					jsons["status"] = "success"
+					jsons["preVersion"] = preVersion
+					jsons["version"] = version
+				}
+				jsonb, _ := json.Marshal(jsons)
+				data.Add("payload", string(jsonb))
+				resp, err := http.PostForm(payloadUrl, data)
+				if err != nil {
+					Logger.Error("%s payload:%s error: %v", s.Name, payloadUrl, err)
 				} else {
 					resultData, _ := ioutil.ReadAll(resp.Body)
 					if resp.StatusCode == 200 {
-						Logger.Info("%s payload:%s success: %s", s.Name, payload, string(resultData))
+						Logger.Info("%s payload:%s success: %s", s.Name, payloadUrl, string(resultData))
 					} else {
-						Logger.Error("%s payload:%s error: %s", s.Name, payload, string(resultData))
+						Logger.Error("%s payload:%s error: %s", s.Name, payloadUrl, string(resultData))
 					}
 				}
 			}
@@ -215,8 +220,8 @@ func (s *service) processGit(client git.Client) {
 		arr := strings.Split(config.Deploy.Version, ":")
 		version, err = client.GetContentFile(arr[0], strings.Join(arr[1:], ":"))
 		version = strings.TrimSpace(version)
-		version = strings.Trim(version,"\n")
-		version = strings.Trim(version,"\r")
+		version = strings.Trim(version, "\n")
+		version = strings.Trim(version, "\r")
 
 		if err != nil {
 			Logger.Error("%s get file error: %v", s.Name, err)
@@ -240,7 +245,7 @@ func (s *service) processGit(client git.Client) {
 
 	//download zip file and unzip
 	dir, _ := filepath.Abs(filepath.Dir(config.Command[0]))
-	file := BINDIR + "/update/"+s.Name+"/" + version + ".zip"
+	file := BINDIR + "/update/" + s.Name + "/" + version + ".zip"
 
 	//Termination download when shouldQuit close
 	var quitLoop = make(chan bool)
