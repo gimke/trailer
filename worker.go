@@ -240,7 +240,7 @@ func (s *service) processGit(client git.Client) {
 
 	//download zip file and unzip
 	dir, _ := filepath.Abs(filepath.Dir(config.Command[0]))
-	file := binPath + "/update/"+s.Name+"/" + version + ".zip"
+	file := BINDIR + "/update/"+s.Name+"/" + version + ".zip"
 
 	//Termination download when shouldQuit close
 	var quitLoop = make(chan bool)

@@ -47,7 +47,7 @@ func newServices() *services {
 }
 
 func load(name string) *service {
-	file := binPath + "/services/" + name + ".yml"
+	file := BINDIR + "/services/" + name + ".yml"
 	if !isExist(file) {
 		return nil
 	}
@@ -62,7 +62,7 @@ func load(name string) *service {
 }
 
 func (ss *services) GetList() {
-	files, err := ioutil.ReadDir(binPath + "/services")
+	files, err := ioutil.ReadDir(BINDIR + "/services")
 	if err == nil {
 		for _, file := range files {
 			basename := file.Name()
@@ -98,14 +98,14 @@ func (s *service) Start() error {
 		out := makeFile(resovePath(s.Config.StdOutFile))
 		cmd.Stdout = out
 	} else {
-		out := makeFile(binPath + "/logs/" + s.Config.Name + "/stdout.log")
+		out := makeFile(BINDIR + "/logs/" + s.Config.Name + "/stdout.log")
 		cmd.Stdout = out
 	}
 	if s.Config.StdErrFile != "" {
 		err := makeFile(resovePath(s.Config.StdErrFile))
 		cmd.Stderr = err
 	} else {
-		err := makeFile(binPath + "/logs/" + s.Config.Name + "/stderr.log")
+		err := makeFile(BINDIR + "/logs/" + s.Config.Name + "/stderr.log")
 		cmd.Stderr = err
 	}
 
@@ -205,7 +205,7 @@ func (s *service) IsExist() bool {
 	return false
 }
 func (s *service) GetVersion() string {
-	versionPath := binPath + "/run/" + s.Name + ".ver"
+	versionPath := BINDIR + "/run/" + s.Name + ".ver"
 	content, err := ioutil.ReadFile(versionPath)
 	if err != nil {
 		return ""
@@ -213,7 +213,7 @@ func (s *service) GetVersion() string {
 	return string(content)
 }
 func (s *service) SetVersion(version string) {
-	versionPath := binPath + "/run/" + s.Name + ".ver"
+	versionPath := BINDIR + "/run/" + s.Name + ".ver"
 	data := []byte(version)
 	os.MkdirAll(filepath.Dir(versionPath), 0755)
 	ioutil.WriteFile(versionPath, data, 0666)
@@ -248,7 +248,7 @@ func (s *service) pidFile() string {
 		pid := resovePath(s.Config.PidFile)
 		return pid
 	} else {
-		return binPath + "/run/" + s.Name + ".pid"
+		return BINDIR + "/run/" + s.Name + ".pid"
 	}
 }
 

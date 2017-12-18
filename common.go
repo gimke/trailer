@@ -24,7 +24,7 @@ const (
 
 var (
 	VERSION = "1.0.0"
-	binPath string
+	BINDIR string
 	//flags
 	startFlag   bool
 	stopFlag    bool
@@ -43,26 +43,22 @@ var (
 )
 
 func init() {
-	bin := filepath.Base(os.Args[0])
-	dir := ""
-	if bin == name {
-		//exec
-		dir = filepath.Dir(os.Args[0])
-	} else {
-		//go run
-		dir, _ = os.Getwd()
+	bin, _ := os.Executable()
+	realPath, err := os.Readlink(bin)
+	if err == nil {
+		bin = realPath
 	}
-	binPath, _ = filepath.Abs(dir)
-	logger.SetFileOutput(binPath + "/logs/trailer")
+	BINDIR = filepath.Dir(bin)
+	logger.SetFileOutput(BINDIR + "/logs/trailer")
 	initService()
 }
 
 func initService() {
-	file := binPath + "/services/" + name + ".yml"
+	file := BINDIR + "/services/" + name + ".yml"
 	if !isExist(file) {
-		os.MkdirAll(binPath+"/services", 0755)
+		os.MkdirAll(BINDIR+"/services", 0755)
 		ioutil.WriteFile(file, []byte(configText), 0666)
-		demoFile := binPath + "/services/demo.yml"
+		demoFile := BINDIR + "/services/demo.yml"
 		ioutil.WriteFile(demoFile, []byte(demoText), 0666)
 	}
 }
@@ -92,9 +88,9 @@ func resovePath(path string) string {
 		return path
 	} else {
 		if strings.HasPrefix(path, "."+string(os.PathSeparator)) {
-			return binPath + path[1:]
+			return BINDIR + path[1:]
 		} else {
-			return binPath + "/" + path
+			return BINDIR + "/" + path
 		}
 	}
 }
@@ -104,7 +100,7 @@ func resoveCommand(path string) string {
 		return path
 	} else {
 		if strings.HasPrefix(path, "."+string(os.PathSeparator)) {
-			return binPath + path[1:]
+			return BINDIR + path[1:]
 		} else {
 			return path
 		}
