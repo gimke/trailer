@@ -64,7 +64,7 @@ func (w *worker) Do() {
 		w.done <- true
 	}()
 	w.LoadServices()
-	Logger.Info("Service load services")
+	Logger.Info("Load config")
 	for _, s := range *w.services {
 		w.wg.Add(1)
 		//first run it

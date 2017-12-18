@@ -58,11 +58,11 @@ func init() {
 }
 
 func initService() {
-	file := BINDIR + "/services/" + name + ".yml"
+	file := BINDIR + "/config/" + name + ".yml"
 	if !isExist(file) {
-		os.MkdirAll(BINDIR+"/services", 0755)
+		os.MkdirAll(BINDIR+"/config", 0755)
 		ioutil.WriteFile(file, []byte(configText), 0666)
-		demoFile := BINDIR + "/services/demo.yml"
+		demoFile := BINDIR + "/config/demo.yml"
 		ioutil.WriteFile(demoFile, []byte(demoText), 0666)
 	}
 }

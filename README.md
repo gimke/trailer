@@ -46,7 +46,7 @@ Usage of trailer:
 ```
 
 ### config
-> config path services
+> config path config
 
 #### yaml
 ```yaml

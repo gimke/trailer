@@ -47,7 +47,7 @@ func newServices() *services {
 }
 
 func load(name string) *service {
-	file := BINDIR + "/services/" + name + ".yml"
+	file := BINDIR + "/config/" + name + ".yml"
 	if !isExist(file) {
 		return nil
 	}
@@ -62,14 +62,11 @@ func load(name string) *service {
 }
 
 func (ss *services) GetList() {
-	files, err := ioutil.ReadDir(BINDIR + "/services")
+	files, err := ioutil.ReadDir(BINDIR + "/config")
 	if err == nil {
 		for _, file := range files {
 			basename := file.Name()
 			if strings.HasPrefix(basename, ".") {
-				continue
-			}
-			if strings.HasSuffix(basename, ".private.yml") {
 				continue
 			}
 			name := strings.TrimSuffix(basename, filepath.Ext(basename))
