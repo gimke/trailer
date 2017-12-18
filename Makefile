@@ -40,5 +40,3 @@ fmt:
 clean:
 	-rm -rf ./build/linux-${VERSION}/*
 	-rm -rf ./build/darwin-${VERSION}/*
-
-.PHONY: link linux darwin windows test vet fmt clean
