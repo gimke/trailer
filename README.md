@@ -10,9 +10,7 @@ https://github.com/gimke/trailer/releases
 ```bash
 go get -u -d github.com/gimke/trailer
 cd ~/go/src/github.com/gimke/trailer
-go build
-./trailer -s
-./trailer -l
+make all
 ```
 ```txt
 Usage of trailer:
