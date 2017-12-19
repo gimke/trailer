@@ -184,14 +184,17 @@ func (s *service) processGit(client git.Client) {
 					"name":     s.Name,
 				}
 				if err != nil {
+					jsons["event"] = "update"
 					jsons["status"] = "failed"
 					jsons["error"] = err.Error()
 				} else {
+					jsons["event"] = "update"
 					jsons["status"] = "success"
 					jsons["preVersion"] = preVersion
 					jsons["version"] = version
 				}
 				jsonb, _ := json.Marshal(jsons)
+				data.Add("event", "update")
 				data.Add("payload", string(jsonb))
 				resp, err := http.PostForm(payloadUrl, data)
 				if err != nil {

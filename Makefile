@@ -18,15 +18,15 @@ LDFLAGS = -ldflags "-X main.VERSION=${VERSION}"
 all: clean linux darwin
 
 linux:
-	@cd ${BUILD_DIR}
 	@GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/linux-${VERSION}/${BINARY} .
-	@/bin/echo -n "${VERSION}" > ./build/linux-${VERSION}/.ver
+	@cd ${BUILD_DIR} && /bin/echo -n "${VERSION}" > ./build/linux-${VERSION}/.ver
+	@cd ${BUILD_DIR}/build && zip -q -r linux-${VERSION}.zip ./linux-${VERSION}/*
 	@echo "\033[32;1mBuild linux Done \033[0m"
 
 darwin:
-	@cd ${BUILD_DIR}
 	@GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/darwin-${VERSION}/${BINARY} .
-	@/bin/echo -n "${VERSION}" > ./build/darwin-${VERSION}/.ver
+	@cd ${BUILD_DIR} && /bin/echo -n "${VERSION}" > ./build/darwin-${VERSION}/.ver
+	@cd ${BUILD_DIR}/build && zip -q -r darwin-${VERSION}.zip ./darwin-${VERSION}/*
 	@echo "\033[32;1mBuild darwin Done \033[0m"
 
 #windows:
@@ -39,5 +39,7 @@ fmt:
 	@go fmt $$(go list ./... | grep -v /vendor/)
 
 clean:
+	@rm -rf ./build/linux-${VERSION}.zip
+	@rm -rf ./build/darwin-${VERSION}.zip
 	@rm -rf ./build/linux-${VERSION}/*
 	@rm -rf ./build/darwin-${VERSION}/*
