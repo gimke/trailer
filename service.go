@@ -250,6 +250,6 @@ func (s *service) pidFile() string {
 }
 
 func (s *service) processExist(pid int) bool {
-	killErr := syscall.Kill(pid, syscall.Signal(0))
-	return killErr == nil
+	_, err := os.FindProcess(pid)
+	return err == nil
 }
