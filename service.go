@@ -20,18 +20,16 @@ type service struct {
 }
 
 type config struct {
-	Name    string
-	Env     []string
-	Command []string
-	PidFile string `yaml:"pid_file,omitempty"`
-
-	StdOutFile string `yaml:"std_out_file,omitempty"`
-	StdErrFile string `yaml:"std_err_file,omitempty"`
-	Grace      bool   `yaml:"grace,omitempty"`
-	RunAtLoad  bool   `yaml:"run_at_load,omitempty"`
-	KeepAlive  bool   `yaml:"keep_alive,omitempty"`
-
-	Deploy *deploy `yaml:"deploy,omitempty"`
+	Name       string
+	Env        []string
+	Command    []string
+	PidFile    string  `yaml:"pid_file,omitempty"`
+	StdOutFile string  `yaml:"std_out_file,omitempty"`
+	StdErrFile string  `yaml:"std_err_file,omitempty"`
+	Grace      bool    `yaml:"grace,omitempty"`
+	RunAtLoad  bool    `yaml:"run_at_load,omitempty"`
+	KeepAlive  bool    `yaml:"keep_alive,omitempty"`
+	Deploy     *deploy `yaml:"deploy,omitempty"`
 }
 
 type deploy struct {
