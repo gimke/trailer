@@ -5,10 +5,6 @@ import (
 	"fmt"
 )
 
-/*
-todo 1,增加gitlab的支持
-*/
-
 func main() {
 	flag.Usage = usage
 
