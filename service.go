@@ -248,6 +248,14 @@ func (s *service) pidFile() string {
 }
 
 func (s *service) processExist(pid int) bool {
-	_, err := os.FindProcess(pid)
-	return err == nil
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	} else {
+		err := process.Signal(syscall.Signal(0))
+		if err!=nil {
+			return false
+		}
+	}
+	return true
 }
