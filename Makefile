@@ -15,7 +15,7 @@ BUILD_DIR_LINK=$(shell readlink ${BUILD_DIR})
 LDFLAGS = -ldflags "-X main.VERSION=${VERSION}"
 
 # Build the project
-all: clean linux darwin
+all: clean linux darwin windows
 
 linux:
 	@GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/linux-${VERSION}/${BINARY} . ; \
@@ -32,6 +32,14 @@ darwin:
 	cd ${BUILD_DIR}/build ; \
 	zip -q -r darwin-${VERSION}.zip ./darwin-${VERSION}/* ; \
 	echo "\033[32;1mBuild darwin Done \033[0m"
+
+windows:
+	@GOOS=windows GOARCH=${GOARCH} go build ${LDFLAGS} -o ./build/windows-${VERSION}/${BINARY}.exe . ; \
+	cd ${BUILD_DIR} ; \
+	/bin/echo -n "${VERSION}" > ./build/windows-${VERSION}/.ver ; \
+	cd ${BUILD_DIR}/build ; \
+	zip -q -r windows-${VERSION}.zip ./windows-${VERSION}/* ; \
+	echo "\033[32;1mBuild windows Done \033[0m"
 
 #windows:
 #	cd ${BUILD_DIR}; \

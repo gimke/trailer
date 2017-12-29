@@ -123,24 +123,30 @@ func (s *service) Stop() error {
 	if pid == 0 {
 		return ErrAlreadyStopped
 	} else {
-		err := syscall.Kill(pid, syscall.SIGINT)
-		if err != nil {
-			return err
-		}
-		quitStop := make(chan bool)
-		go func() {
-			for {
-				if pid := s.GetPid(); pid == 0 {
-					quitStop <- true
-					break
-				}
-				time.Sleep(1 * time.Second)
+		//err := syscall.Kill(pid, syscall.SIGINT)
+		if p,find := s.processExist(pid);find {
+			err := p.Signal(syscall.SIGINT)
+			if err != nil {
+				return err
 			}
-		}()
-		<-quitStop
-		if s.Config.PidFile == "" {
-			s.RemovePid()
+			quitStop := make(chan bool)
+			go func() {
+				for {
+					if pid := s.GetPid(); pid == 0 {
+						quitStop <- true
+						break
+					}
+					time.Sleep(1 * time.Second)
+				}
+			}()
+			<-quitStop
+			if s.Config.PidFile == "" {
+				s.RemovePid()
+			}
 		}
+		//if err != nil {
+		//	return err
+		//}
 	}
 	return nil
 }
@@ -168,9 +174,11 @@ func (s *service) Restart() error {
 	pid := s.GetPid()
 	if pid != 0 {
 		if s.Config.Grace {
-			err := syscall.Kill(pid, syscall.SIGUSR2)
-			if err != nil {
-				return err
+			if p,find := s.processExist(pid);find {
+				err := p.Signal(syscall.SIGUSR2)
+				if err != nil {
+					return err
+				}
 			}
 		} else {
 			err := s.Stop()
@@ -220,7 +228,7 @@ func (s *service) GetPid() int {
 		return 0
 	} else {
 		pid, _ := strconv.Atoi(string(content))
-		if s.processExist(pid) {
+		if _,find := s.processExist(pid);find {
 			return pid
 		} else {
 			return 0
@@ -247,15 +255,15 @@ func (s *service) pidFile() string {
 	}
 }
 
-func (s *service) processExist(pid int) bool {
+func (s *service) processExist(pid int) (*os.Process,bool) {
 	process, err := os.FindProcess(pid)
 	if err != nil {
-		return false
+		return nil,false
 	} else {
 		err := process.Signal(syscall.Signal(0))
 		if err!=nil {
-			return false
+			return nil,false
 		}
 	}
-	return true
+	return process,true
 }
